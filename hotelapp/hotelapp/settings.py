@@ -37,8 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'reservations.apps.ReservationsConfig',
-    # 'reservations',
+    'reservations.apps.ReservationsConfig',  # vs reservations
+    'users.apps.UsersConfig',  # vs users
 ]
 
 MIDDLEWARE = [
@@ -120,3 +120,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+
+# use custom user model
+
+AUTH_USER_MODEL = 'users.CustomUser'
