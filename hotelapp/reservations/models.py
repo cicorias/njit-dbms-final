@@ -1,5 +1,6 @@
 from typing import cast
 from django.db import models
+from django.db.models import constraints
 from django.db.models.deletion import CASCADE
 from django.db.models.fields import CharField
 # from django.contrib.admin.models import User
@@ -33,8 +34,9 @@ class Room(models.Model):
   ROOM_TYPE_CHOICES = [(STANDARD, 'standard'), (DOUBLE,'double'), (DELUXE,'deluxe'), (SUITE, 'suite')]
 
   #real fields
+  room_id = models.AutoField(primary_key=True)
   hotel_id = models.ForeignKey(Hotel, db_column='hotel_id', on_delete=CASCADE)
-  room_no = models.AutoField(primary_key=True)
+  room_no = models.CharField(max_length=10) # TODO might need to be composite
   room_type = models.CharField(choices=ROOM_TYPE_CHOICES,
                                 max_length=20,
                                 default=STANDARD)
@@ -45,6 +47,9 @@ class Room(models.Model):
 
   class Meta:
     db_table = 'room'
+    constraints = [models.UniqueConstraint(
+              fields=['hotel_id', 'room_no',], name='unique hotelroomid')
+    ]
 
 
 class CreditCard(models.Model):
@@ -94,5 +99,66 @@ class RoomReservation(models.Model):
     db_table = 'room_reservation'
     #unique_together = ()
     constraints = [models.UniqueConstraint(
-                  fields=['invoice_number', 'hotel_id', 'room_no', 'check_in_date',], name='unique roomreservation')
-    ]
+                  fields=['invoice_number', 'hotel_id', 'room_no', 'check_in_date',], name='unique roomreservation')]
+
+class Breakfast(models.Model):
+  # types: continental, English, Italian, American, French
+  CONTINENTAL = 'continental'
+  ENGLISH = 'english'
+  ITALIAN = 'italian'
+  AMERICAN = 'american'
+  FRENCH = 'french'
+  BR_CHOICES = [(CONTINENTAL, 'continental'), (ENGLISH, 'english'), (ITALIAN, 'italian'), (AMERICAN, 'american'), (FRENCH, 'french')]
+
+  #real fields
+  bid = models.AutoField(primary_key=True)
+  hotel_id = models.ForeignKey(Hotel, db_column='hotel_id', on_delete=CASCADE)
+  b_type = models.CharField(choices=BR_CHOICES, max_length=20)
+  b_price = models.FloatField()
+  description = models.CharField(max_length=40)
+
+  class Meta:
+    db_table = 'breakfast'
+    constraints = [models.UniqueConstraint(
+                    fields=['hotel_id', 'b_type',], name='unique hotelbreakfasttype')]
+
+
+class Service(models.Model):
+  #parking, laundry, airport drop- off/pick up etc.)
+  PARKING = 'parking'
+  LAUNDRY = 'laundry'
+  AIRPORT = 'airport'
+
+  ST_CHOICES = [(PARKING, 'parking'), (LAUNDRY, 'laundry'),(AIRPORT, 'airport')]
+
+  # real fields
+  sid = models.AutoField(primary_key=True)
+  hotel_id = models.ForeignKey(Hotel, db_column='hotel_id', on_delete=CASCADE)
+  s_type = models.CharField(choices=ST_CHOICES, max_length=20)
+  s_price = models.FloatField()
+
+  class Meta:
+    db_table = 'service'
+    constraints = [models.UniqueConstraint(
+                                  fields=['hotel_id', 's_type'], name='unique hotelservicetype')]
+
+
+
+# TODO:
+class ReservationBreakfast(models.Model):
+  pass
+
+class ReservationService(models.Model):
+  pass
+
+class DiscountedRoom(models.Model):
+  pass
+
+class RoomReview(models.Model):
+  pass
+
+class BreakfastReview(models.Model):
+  pass
+
+class ServiceReview(models.Model):
+  pass
