@@ -18,10 +18,14 @@ from users.models import CustomUser
 
 class Hotel(models.Model):
   hotel_id =  models.AutoField(primary_key=True)
+  hotel_name = models.CharField(max_length=20)
   street = models.CharField(max_length=40)
   country = models.CharField(max_length=40)
   state = models.CharField(max_length=20)
   zip = models.CharField(max_length=5)
+
+  def __str__(self) -> str:
+    return f'{self.hotel_id} - {self.hotel_name} - {self.country}'
 
   class Meta:
     db_table = 'hotel'
@@ -62,7 +66,8 @@ class CreditCard(models.Model):
   CC_CHOICES = [(VISA, 'visa'), (MASTERCARD,'mastercard'), (AMEX, 'american express')]
 
   #actual fields
-  cc_number = models.AutoField(primary_key=True)
+  ccid = models.AutoField(primary_key=True)
+  cc_number = models.CharField(db_column='cc_number', max_length=20)
   cc_type = models.CharField(choices = CC_CHOICES, 
                               max_length = 20,
                               default=VISA)
@@ -79,6 +84,7 @@ class CreditCard(models.Model):
 
   class Meta:
     db_table = 'credit_card'
+    constraints = [models.UniqueConstraint(fields=['cc_number'], name='unique creditcard')]
 
 
 class Reservation(models.Model):
