@@ -11,6 +11,7 @@ from django.db.models.fields import CharField
 # Third - if your user can only have one Profile and you're not intend to use very old versions of django then you should be using OneToOneField instead of ForeignKey.
 # Fourth thing - you could probably omit usage of RequestContext() by using one of the generic views bundled with django - read about that here
 
+# TODO: add __str__ functions to classes
 
 # NOTE: CustomUser is in ./users/models.py
 from users.models import CustomUser
@@ -72,6 +73,9 @@ class CreditCard(models.Model):
   # expiration_date = models.DateField(default=datetime.now()+timedelta(days=30))
   expiration_date = models.DateField()
   name = models.CharField(max_length=40)
+
+  def __str__(self):
+    return f'{self.name} - {self.cc_type} - {self.cc_number}'
 
   class Meta:
     db_table = 'credit_card'
