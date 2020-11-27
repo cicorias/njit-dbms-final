@@ -184,6 +184,9 @@ class ReservationBreakfast(models.Model):
 
   nooforders = models.PositiveIntegerField(db_column='nooforders')
 
+  def __str__(self) -> str:
+    return f'{self.bid}:{self.rr_id} - rb_id:{self.rb_id}'
+
   class Meta:
     db_table = 'rresv_breakfast'
     constraints = [models.UniqueConstraint(
@@ -196,6 +199,9 @@ class ReservationService(models.Model):
   rr_id = models.ForeignKey(Reservation, db_column='rr_id', on_delete=CASCADE)
 
   sprice = models.FloatField(db_column='sprice')
+
+  def __str__(self) -> str:
+    return f'{self.sid}:{self.rr_id} - rs_id:{self.rs_id}'
 
   class Meta:
     db_table = 'rresv_service'
