@@ -46,7 +46,7 @@ class Room(models.Model):
   capacity = models.PositiveIntegerField(db_column='capacity')
 
   def __str__(self) -> str:
-    return f'room {self.room_no}'
+    return f'{self.hotel_id} - room {self.room_no}'
 
   class Meta:
     db_table = 'room'
@@ -97,7 +97,7 @@ class Reservation(models.Model):
   r_date = models.DateField(db_column='r_date')
 
   def __str__(self) -> str:
-    return f'{self.invoice_number}'
+    return f'{self.cid} - {self.invoice_number}'
 
   class Meta:
     db_table = 'reservation'
@@ -112,6 +112,9 @@ class RoomReservation(models.Model):
   room_no = models.ForeignKey(Room, db_column='room_no', on_delete=CASCADE)
   check_in_date = models.DateField(db_column='check_in_date')
   check_out_date = models.DateField(db_column='check_out_date')
+
+  def __str__(self) -> str:
+    return f'{self.hotel_id}:{self.room_no} rr_id: {self.rr_id}'
 
   class Meta:
     db_table = 'room_reservation'
@@ -140,6 +143,9 @@ class Breakfast(models.Model):
   b_price = models.FloatField(db_column='b_price')
   description = models.CharField(max_length=40, db_column='description')
 
+  def __str__(self) -> str:
+    return f'{self.hotel_id}:{self.b_type}: {self.description} - bid: {self.bid}'
+
   class Meta:
     db_table = 'breakfast'
     constraints = [models.UniqueConstraint(
@@ -162,6 +168,9 @@ class Service(models.Model):
                             max_length=20)
   s_price = models.FloatField(db_column='s_price')
 
+  def __str__(self) -> str:
+    return f'{self.hotel_id}:{self.s_type} - sid: {self.sid}'
+
   class Meta:
     db_table = 'service'
     constraints = [models.UniqueConstraint(
@@ -175,6 +184,9 @@ class ReservationBreakfast(models.Model):
 
   nooforders = models.PositiveIntegerField(db_column='nooforders')
 
+  def __str__(self) -> str:
+    return f'{self.bid}:{self.rr_id} - rb_id:{self.rb_id}'
+
   class Meta:
     db_table = 'rresv_breakfast'
     constraints = [models.UniqueConstraint(
@@ -187,6 +199,9 @@ class ReservationService(models.Model):
   rr_id = models.ForeignKey(Reservation, db_column='rr_id', on_delete=CASCADE)
 
   sprice = models.FloatField(db_column='sprice')
+
+  def __str__(self) -> str:
+    return f'{self.sid}:{self.rr_id} - rs_id:{self.rs_id}'
 
   class Meta:
     db_table = 'rresv_service'
@@ -220,7 +235,7 @@ class RoomReview(models.Model):
   text_content = models.CharField(max_length=40, db_column='text')
 
   def __str__(self) -> str:
-    return f'{self.rid}'
+    return f'{self.room_id} - rid: {self.rid}'
 
   class Meta:
     db_table = 'room_review'
@@ -240,7 +255,7 @@ class BreakfastReview(models.Model):
   text_content = models.CharField(max_length=40, db_column='text')
 
   def __str__(self) -> str:
-    return f'{self.rid}'
+    return f'{self.cid}: {self.bid} - rid:{self.rid}'
 
   class Meta:
     db_table = 'breakfast_review'
@@ -260,7 +275,7 @@ class ServiceReview(models.Model):
   text_content = models.CharField(max_length=40, db_column='text')
 
   def __str__(self) -> str:
-    return f'{self.rid}'
+    return f'{self.sid} from {self.cid}  - rid: {self.rid}'
 
   class Meta:
     db_table = 'service_review'
