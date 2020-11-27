@@ -1,5 +1,7 @@
 # Simple Hotel Reservations
 
+## REAL SIMPLE START -- REMEMBER TO KILL db.sqlite -- then 'migrate', then 'createsuperuse' -- start the site, go to the /admin site - add entities.
+
 # Environment setup
 ## Step 1 -- Clone the repo
 
