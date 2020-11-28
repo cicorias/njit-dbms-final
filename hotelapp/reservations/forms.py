@@ -1,4 +1,6 @@
-from django.forms import ModelForm
+from django import forms
+from django.forms import fields
+#from django.forms import Form, ModelForm
 
 from .models import Hotel, Reservation
 
@@ -10,5 +12,17 @@ from .models import Hotel, Reservation
 
 # adding to model admin site https://docs.djangoproject.com/en/3.1/ref/contrib/admin/
 
-class ReservationForm(ModelForm):
+class ReservationForm(forms.ModelForm):
     pass
+
+class HotelSelectionForm(forms.Form):
+    country = forms.CharField(label = 'country', max_length=20)
+    state = forms.CharField(label = 'state')
+
+# class HotelSelectionForm(forms.ModelForm):
+#     class Meta:
+#         model = Hotel
+#         fields = ['country', 'state']
+
+#     def __init__(self, *args, **kwargs) -> None:
+#         super().__init__(*args, **kwargs)
