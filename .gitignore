@@ -141,3 +141,5 @@ cython_debug/
 # local database engine persistence
 .data/postgres
 .data/mysql
+
+.DS_Store
