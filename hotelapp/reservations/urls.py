@@ -8,5 +8,8 @@ urlpatterns = [
     path('', views.index, name='index' ),
     path('hotel/<hotel_id>', login_required(views.ReservationView.as_view(), login_url='/users/login'), name='book-hotel'),
     path('bookings/', login_required(views.bookings, login_url='/users/login'), name='bookings'),
-
+    path('stats/highestratedroom', login_required(views.general_statistics, login_url='/users/login'), name='stats_highest_rated_room'),
+    path('stats/fivebestcustomers', login_required(views.general_statistics, login_url='/users/login'), name='stats_five_best_customers'),
+    path('stats/highestratedbreakfast', login_required(views.general_statistics, login_url='/users/login'), name='stats_highest_rated_breakfast'),
+    path('stats/highestratedservice', login_required(views.general_statistics, login_url='/users/login'), name='stats_highest_rated_service'),
 ]

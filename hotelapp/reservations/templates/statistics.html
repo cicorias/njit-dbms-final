@@ -1,0 +1,17 @@
+{% extends 'resbase.html' %}
+{% block content %}
+
+{% if messages|length > 0 %}
+{{messages}}
+{% endif %}
+
+<p>Statistics:</p>
+
+<h3>{{ title }}</h3>
+
+{% for r in results %}
+  <p>r: {{r}}</p>
+
+{% endfor %}
+
+{% endblock %}

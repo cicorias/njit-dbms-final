@@ -8,16 +8,6 @@ from django.utils.translation import check_for_language
 from .models import CreditCard, Hotel, Reservation, Room, RoomReservation, Service
 from .fields import EmptyChoiceField, EmptyMultipleChoiceField
 
-# https://stackoverflow.com/questions/14901680/how-to-do-a-multi-step-form-in-django/14901714#14901714
-# https://github.com/jazzband/django-formtools
-# https://django-formtools.readthedocs.io/en/latest/wizard.html
-# adding to model admin site https://docs.djangoproject.com/en/3.1/ref/contrib/admin/
-
-# class ReservationForm(forms.ModelForm):
-#     class Meta:
-#         model = RoomReservation
-#         fields = ('hotel_id', 'check_in_date', 'check_out_date',)
-
 class ReservationForm(forms.Form):
 
     hotel = forms.CharField(widget=forms.TextInput(attrs={'readonly': 'readonly'}))
