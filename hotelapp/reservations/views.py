@@ -1,6 +1,7 @@
 from typing import Any, Dict, Tuple
 from django.forms.fields import CharField, ChoiceField, MultipleChoiceField
 from django.forms.widgets import CheckboxInput
+from django.http import request
 from django.http.response import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -47,6 +48,9 @@ def bookings(request: HttpRequest) -> HttpResponse:
     context['reservations'] = rv #  [(k, v) for k, v in rv.items()]
     return render(request, 'bookings.html', context)
 
+def stats_highest_rated_room(request: HttpRequest) -> HttpResponse:
+    context = {}
+    return render(request, 'statistics.html', context)
 
 
 class ReservationView(View):

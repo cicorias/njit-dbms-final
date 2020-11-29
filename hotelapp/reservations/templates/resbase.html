@@ -20,11 +20,21 @@
   </div>
   <script src="{% static 'js/jquery-3.5.1.min.js' %}"></script>
   <script src="{% static 'js/bootstrap.bundle.js' %}"></script>
-    {% block script %}
-    {% endblock %}
+  {% block script %}
+  {% endblock %}
   <nav>
-    <p><a href="/admin">Adminstration site</a></p>
+    {% if user.is_authenticated %}
+    Hi {{ user.email }}!
+    <p><a href="{% url 'logout' %}">Log Out</a></p>
+    {% else %}
+    <p>You are not logged in</p>
+    <a href="{% url 'login' %}">Log In</a> |
+    <a href="{% url 'signup' %}">Sign Up</a>
+    {% endif %}
+    <p><a href="/admin" target="_blank">Adminstration site</a></p>
     <p><a href="/reservations">Reservations</a></p>
+    <p><a href="/reservations/bookings">Bookings</a></p>
+    <p><a href="/reservations/stats/highestratedroom">Highest Rated Room</a></p>
   </nav>
 </body>
 

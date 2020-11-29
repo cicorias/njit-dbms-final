@@ -1,6 +1,3 @@
-
-
-
 from django import forms
 
 class EmptyChoiceField(forms.ChoiceField):
