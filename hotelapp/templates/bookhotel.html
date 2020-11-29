@@ -1,0 +1,23 @@
+{% extends 'resbase.html' %}
+{% block content %}
+
+{% if messages|length > 0 %}
+{{messages}}
+{% endif %}
+
+<form method="post">
+  <div>
+    {% csrf_token %}
+    {{ form }}
+  </div>
+  <input type="submit" value="Submit">
+
+</form>
+
+<p>Discounts</p>
+
+{% if discounts|length > 0 %}
+{{discount}}
+{% endif %}
+
+{% endblock %}

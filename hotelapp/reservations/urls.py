@@ -5,8 +5,6 @@ from . import views
 app_name = 'reservations'
 
 urlpatterns = [
-    # path('', views.index, name='index'),
-    # path('', login_required(views.SurveyList.as_view(
-    #         template_name='survey_list.html'))),
     path('', views.index, name='index' ),
+    path('hotel/<hotel_id>', login_required(views.ReservationView.as_view(), login_url='/users/login'), name='book-hotel'),
 ]
