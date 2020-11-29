@@ -1,5 +1,5 @@
 from typing import Any, Dict, Tuple
-from django.forms.fields import MultipleChoiceField
+from django.forms.fields import ChoiceField, MultipleChoiceField
 from django.forms.widgets import CheckboxInput
 from django.http.response import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
@@ -54,14 +54,12 @@ class ReservationView(View):
 
         bkfst = form.get_breakfast(hotel)
         # form.fields['breakfast'].choices = bkfst
-        form.fields['breakfast'] = EmptyChoiceField(required=False, choices=bkfst, widget=CheckboxInput()) # empty_label='---- none ----')
+        form.fields['breakfast'] = EmptyChoiceField(required=False, choices=bkfst, empty_label='---- none ----') #, widget=CheckboxInput()) # 
 
         user = request.user
         
 
         context['form'] = form
-
-
 
         return render(request, 'bookhotel.html', context)
 
@@ -70,10 +68,12 @@ class ReservationView(View):
         hotel = get_object_or_404(Hotel, hotel_id=kwargs['hotel_id'])
 
         svcs = form.get_services(hotel)
-        form.fields['service'].choices = svcs
+        # form.fields['service'].choices = svcs
+        form.fields['service'] = MultipleChoiceField(required=False, choices=svcs, widget=forms.CheckboxSelectMultiple())
 
         bkfst = form.get_breakfast(hotel)
-        form.fields['breakfast'].choices = bkfst
+        # form.fields['breakfast'].choices = bkfst
+        form.fields['breakfast'] = EmptyChoiceField(required=False, choices=bkfst, empty_label='---- none ----')
 
         context = {}
         messages = []

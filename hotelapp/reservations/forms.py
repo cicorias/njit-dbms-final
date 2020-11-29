@@ -18,6 +18,7 @@ from .fields import EmptyChoiceField, EmptyMultipleChoiceField
 #         fields = ('hotel_id', 'check_in_date', 'check_out_date',)
 
 class ReservationForm(forms.Form):
+
     hotel = forms.CharField(widget=forms.TextInput(attrs={'readonly': 'readonly'}))
     check_in = forms.DateField(initial=datetime.date.today, required=True)
     check_out = forms.DateField(initial=datetime.datetime.now()+timedelta(days=1), required=True)
@@ -27,7 +28,7 @@ class ReservationForm(forms.Form):
     service = EmptyMultipleChoiceField(widget=forms.CheckboxSelectMultiple()) #, initial=get_services())
     breakfast = EmptyChoiceField()
 
-    c_card_number = forms.CharField(required=True, max_length=20)
+    credit_card_number = forms.CharField(required=True, max_length=20)
     # c_card_date = forms.DateField(required=True)
 
     MONTH_CHOICES = (
@@ -54,12 +55,20 @@ class ReservationForm(forms.Form):
         ("2025", "2025"),
     )
 
-    card_month = forms.ChoiceField(required=True, choices=MONTH_CHOICES)
-    card_year = forms.ChoiceField(required=True, choices=YEAR_CHOICES)
-    c_card_name = forms.CharField(required=True, max_length=20)
+    credit_card_month = forms.ChoiceField(required=True, choices=MONTH_CHOICES)
+    creidt_card_year = forms.ChoiceField(required=True, choices=YEAR_CHOICES)
+    credit_card_name = forms.CharField(required=True, max_length=20)
 
     # def save(self):
     #     pass
+
+
+    def __init__(self, *args, **kwargs):
+        super(ReservationForm, self).__init__(*args, **kwargs)
+        for field in iter(self.fields):
+            self.fields[field].widget.attrs.update({
+                'class': 'form-control'
+        })
 
     @staticmethod
     def get_services(hotel) -> Dict:
