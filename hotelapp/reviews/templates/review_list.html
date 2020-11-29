@@ -1,0 +1,19 @@
+<!-- templates/reviews.html -->
+{% extends 'revbase.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+{% if user.is_authenticated %}
+  Hi {{ user.email }}!
+  <p><a href="{% url 'logout' %}">Log Out</a></p>
+  <table>
+      {{room_reservations}}
+  </table>
+{% else %}
+  <p>You are not logged in</p>
+  <a href="{% url 'login' %}">Log In</a> |
+  <a href="{% url 'signup' %}">Sign Up</a>
+{% endif %}
+{% endblock %}
