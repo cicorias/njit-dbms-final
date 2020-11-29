@@ -17,7 +17,7 @@ class ReservationForm(forms.Form):
 
     room_choice = forms.ChoiceField(required=True, choices=Room.ROOM_TYPE_CHOICES)
 
-    discount = forms.CharField(widget=forms.TextInput(attrs={'readonly': 'readonly'}))
+    discount = forms.CharField(required=False, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
     service = EmptyMultipleChoiceField(widget=forms.CheckboxSelectMultiple()) #, initial=get_services())
     breakfast = EmptyChoiceField()
     breakfast_number_orders = forms.IntegerField(required=False, min_value=0, max_value=8) # should be capaicity?

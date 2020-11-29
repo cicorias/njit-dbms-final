@@ -123,7 +123,7 @@ class ReservationView(View):
 
         if len(rooms) > 0:
             disc = form.get_discounts(rooms[0][0], form.fields['check_in'], form.fields['check_out'])
-            form.fields['discount'] = CharField(initial=disc, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
+            form.fields['discount'] = CharField(initial=disc, required=False, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
         # END refactor
         
         user = request.user
@@ -147,7 +147,7 @@ class ReservationView(View):
 
         if len(rooms) > 0:
             disc = form.get_discounts(rooms[0][0], form.fields['check_in'], form.fields['check_out'])
-            form.fields['discount'] = CharField(initial=disc, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
+            form.fields['discount'] = CharField(initial=disc, required=False, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
         # END refactor
 
         user = request.user
