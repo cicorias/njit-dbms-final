@@ -1,5 +1,5 @@
 from typing import Any, Dict, Tuple
-from django.forms.fields import ChoiceField, MultipleChoiceField
+from django.forms.fields import CharField, ChoiceField, MultipleChoiceField
 from django.forms.widgets import CheckboxInput
 from django.http.response import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
@@ -16,7 +16,7 @@ from reservations.fields import EmptyChoiceField, EmptyMultipleChoiceField
 from users.models import CustomUser
 from .forms import HotelSelectionForm, ReservationForm
 
-from .models import CreditCard, Hotel, Reservation, Room, RoomReservation, Service, BookingRequest
+from .models import Breakfast, CreditCard, Hotel, Reservation, ReservationBreakfast, ReservationService, Room, RoomReservation, Service, BookingRequest
 
 def index(request: HttpRequest) -> HttpResponse:
     context = {}
@@ -44,7 +44,7 @@ def bookings(request: HttpRequest) -> HttpResponse:
         for j in i.roomreservation_set.all():
             rv[j] = f'date: {i.r_date} - {j.hotel_id} - checkin: {j.check_in_date} through {j.check_out_date}'
 
-    context['reservations'] = [(k, v) for k, v in rv.items()]
+    context['reservations'] = rv #  [(k, v) for k, v in rv.items()]
     return render(request, 'bookings.html', context)
 
 
@@ -67,6 +67,10 @@ class ReservationView(View):
 
         rooms = form.get_rooms(hotel)
         form.fields['room_choice'] = ChoiceField(required=True, choices=rooms)
+
+        if len(rooms) > 0:
+            disc = form.get_discounts(rooms[0][0], form.fields['check_in'], form.fields['check_out'])
+            form.fields['discount'] = CharField(initial=disc, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
         # END refactor
         
         user = request.user
@@ -87,6 +91,10 @@ class ReservationView(View):
 
         rooms = form.get_rooms(hotel)
         form.fields['room_choice'] = ChoiceField(required=True, choices=rooms)
+
+        if len(rooms) > 0:
+            disc = form.get_discounts(rooms[0][0], form.fields['check_in'], form.fields['check_out'])
+            form.fields['discount'] = CharField(initial=disc, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
         # END refactor
 
         user = request.user
@@ -101,10 +109,17 @@ class ReservationView(View):
                 messages.append('check out must be greater than check in')
 
             # checks: cc date in future
+            cc_exp_date = datetime.date(int(form.cleaned_data['credit_card_year']), int(form.cleaned_data['credit_card_month']), 1)
+            if cc_exp_date < datetime.date.today():
+                messages.append('credit card date must be greater than today')
 
 
             # we can now persist.
             if len(messages) == 0:
+
+                s_list = []
+                for s in form.cleaned_data['service']:
+                    s_list.append(Service.objects.get(pk=s))
 
                 new_booking = BookingRequest(
                     hotel,
@@ -122,7 +137,7 @@ class ReservationView(View):
                     form.cleaned_data['check_out'],
                     form.cleaned_data['breakfast'],
                     form.cleaned_data['breakfast_number_orders'],
-                    # form.cleaned_data['svc_id'], # TODO - a list
+                    s_list, # TODO - a list
                     # form.cleaned_data['discount_id'] # TODO
 
                 )
@@ -131,8 +146,8 @@ class ReservationView(View):
                 # 1. credit card x
                 # 2. reservation x
                 # 3. room_reservation x
-                # 4. rresb_breakfast
-                # 5.  rresv_service
+                # 4. rresb_breakfast x
+                # 5. rresv_service x
 
                 @transaction.atomic
                 def save_reservation(n_req: BookingRequest):
@@ -166,11 +181,28 @@ class ReservationView(View):
 
                     rr_resv.save()
 
+                    # breakfast
+                    if len(n_req.breakfast) > 0:
+                        br = ReservationBreakfast()
+                        br.bid = Breakfast.objects.get(pk=n_req.breakfast)
+                        br.nooforders = n_req.breakfast_number_orders
+                        br.rr_id = resv
+
+                        br.save()
+
+                    # services
+                    for s in n_req.svc_id:
+                        resv_svc = ReservationService()
+                        resv_svc.sid = s
+                        resv_svc.rr_id = resv
+                        resv_svc.sprice = s.s_price
+
+                        resv_svc.save()
+
 
                 save_reservation(new_booking)
 
                 return HttpResponseRedirect(f'/reservations/bookings/')
-                # return HttpResponse('you just booked a hotel room')
 
             context['messages'] = messages
             return render(request, 'bookhotel.html', context)

@@ -1,8 +1,9 @@
 from datetime import timedelta
 import datetime
-from typing import Dict
+from typing import Dict, List
 from django import forms
 from django.forms import fields
+from django.utils.translation import check_for_language
 
 from .models import CreditCard, Hotel, Reservation, Room, RoomReservation, Service
 from .fields import EmptyChoiceField, EmptyMultipleChoiceField
@@ -21,10 +22,12 @@ class ReservationForm(forms.Form):
 
     hotel = forms.CharField(widget=forms.TextInput(attrs={'readonly': 'readonly'}))
     check_in = forms.DateField(initial=datetime.date.today, required=True)
-    check_out = forms.DateField(initial=datetime.datetime.now()+timedelta(days=1), required=True)
+    t_check_out = datetime.datetime.now()+timedelta(days=1)
+    check_out = forms.DateField(initial=t_check_out, required=True)
 
     room_choice = forms.ChoiceField(required=True, choices=Room.ROOM_TYPE_CHOICES)
 
+    discount = forms.CharField(widget=forms.TextInput(attrs={'readonly': 'readonly'}))
     service = EmptyMultipleChoiceField(widget=forms.CheckboxSelectMultiple()) #, initial=get_services())
     breakfast = EmptyChoiceField()
     breakfast_number_orders = forms.IntegerField(required=False, min_value=0, max_value=8) # should be capaicity?
@@ -98,6 +101,16 @@ class ReservationForm(forms.Form):
             rv[i.room_id] = f'{i.room_type} - room number: {i.room_no} - floor: {i.floor}' 
 
         return [(k, v) for k, v in rv.items()]
+
+    @staticmethod
+    def get_discounts(room_key: int, check_in: fields.DateField, check_out: fields.DateField) -> str:
+        rv = ''
+        room = Room.objects.get(pk = room_key)
+        d = room.discountedroom_set.all()
+        t = d.filter(start_date__range=(check_in.initial(), check_out.initial.date()))
+        for i in t:
+            rv += f' {i.discount}'
+        return rv
 
 
 class HotelSelectionForm(forms.Form):

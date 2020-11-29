@@ -196,6 +196,7 @@ class ReservationService(models.Model):
   sid = models.ForeignKey(Service, db_column='sid', on_delete=CASCADE)
   rr_id = models.ForeignKey(Reservation, db_column='rr_id', on_delete=CASCADE)
 
+  # TODO: remove this as it is in the service definition
   sprice = models.FloatField(db_column='sprice')
 
   def __str__(self) -> str:
@@ -300,6 +301,6 @@ BookingRequest = namedtuple('BookingReqeust',
           'check_out',
           'breakfast',
           'breakfast_number_orders',
-          # 'svc_id', # TODO
+          'svc_id', # TODO
           # 'discount_id', # TODO
           ])
