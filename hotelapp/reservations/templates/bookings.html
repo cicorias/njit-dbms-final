@@ -1,0 +1,13 @@
+{% extends 'resbase.html' %}
+{% block content %}
+
+{% if messages|length > 0 %}
+{{messages}}
+{% endif %}
+
+{% for r,v in reservations %}
+  <p>{{ v }}</p>
+
+{% endfor %}
+
+{% endblock %}
