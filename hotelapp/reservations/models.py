@@ -1,11 +1,9 @@
-from typing import cast
+from typing import NamedTuple, cast
+from collections import namedtuple
 from django.db import models
 from django.db.models import constraints
 from django.db.models.deletion import CASCADE
 from django.core.validators import MaxValueValidator, MinValueValidator 
-
-# TODO: use Max/Min on validations.
-# TODO: add __str__ functions to classes
 
 # NOTE: CustomUser is in ./users/models.py
 from users.models import CustomUser
@@ -198,6 +196,7 @@ class ReservationService(models.Model):
   sid = models.ForeignKey(Service, db_column='sid', on_delete=CASCADE)
   rr_id = models.ForeignKey(Reservation, db_column='rr_id', on_delete=CASCADE)
 
+  # TODO: remove this as it is in the service definition
   sprice = models.FloatField(db_column='sprice')
 
   def __str__(self) -> str:
@@ -283,3 +282,25 @@ class ServiceReview(models.Model):
           fields=['cid', 'sid'],
           name='unique servicereview'
     )]
+
+
+# non classes form DTO to pass around...
+BookingRequest = namedtuple('BookingReqeust',
+          ['hotel', 
+          'room',
+          'credit_card_number',
+          'credit_card_type',
+          'credit_card_month',
+          'credit_card_year',
+          'credit_card_code',
+          'credit_card_address',
+          'credit_card_name',
+          'cust_id',
+          'res_date',
+          'check_in',
+          'check_out',
+          'breakfast',
+          'breakfast_number_orders',
+          'svc_id', # TODO
+          # 'discount_id', # TODO
+          ])
