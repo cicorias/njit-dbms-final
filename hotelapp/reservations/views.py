@@ -7,6 +7,7 @@ from django.urls import reverse
 from django.http import HttpResponse, HttpRequest
 from django.views.generic import View, TemplateView
 from django import forms
+from django.db import transaction
 from datetime import timedelta
 import datetime
 import uuid
@@ -15,10 +16,7 @@ from reservations.fields import EmptyChoiceField, EmptyMultipleChoiceField
 from users.models import CustomUser
 from .forms import HotelSelectionForm, ReservationForm
 
-from .models import Hotel, Service
-
-### https://simpleit.rocks/python/django/forms/how-to-use-bootstrap-4-in-django-forms/
-
+from .models import CreditCard, Hotel, Reservation, Room, RoomReservation, Service, BookingRequest
 
 def index(request: HttpRequest) -> HttpResponse:
     context = {}
@@ -38,6 +36,18 @@ def index(request: HttpRequest) -> HttpResponse:
         context['form'] = HotelSelectionForm(initial={'country': 'US', 'state':'NJ'})
         return render(request, 'search.html', context )
 
+def bookings(request: HttpRequest) -> HttpResponse:
+    context = {}
+    rv = {}
+    resvs = request.user.reservation_set.all()
+    for i in resvs:
+        for j in i.roomreservation_set.all():
+            rv[j] = f'date: {i.r_date} - {j.hotel_id} - checkin: {j.check_in_date} through {j.check_out_date}'
+
+    context['reservations'] = [(k, v) for k, v in rv.items()]
+    return render(request, 'bookings.html', context)
+
+
 
 class ReservationView(View):
     def get(self, request: HttpRequest, *args: Tuple, **kwargs: Dict[str, Any]):
@@ -48,17 +58,18 @@ class ReservationView(View):
 
         form = ReservationForm(initial=initial)
 
+        # TODO: refactor these fields - duplicate in POST body.
         svcs = form.get_services(hotel)
-        # form.fields['service'].choices = svcs
         form.fields['service'] = MultipleChoiceField(required=False, choices=svcs, widget=forms.CheckboxSelectMultiple())
 
         bkfst = form.get_breakfast(hotel)
-        # form.fields['breakfast'].choices = bkfst
         form.fields['breakfast'] = EmptyChoiceField(required=False, choices=bkfst, empty_label='---- none ----') #, widget=CheckboxInput()) # 
 
-        user = request.user
+        rooms = form.get_rooms(hotel)
+        form.fields['room_choice'] = ChoiceField(required=True, choices=rooms)
+        # END refactor
         
-
+        user = request.user
         context['form'] = form
 
         return render(request, 'bookhotel.html', context)
@@ -67,14 +78,18 @@ class ReservationView(View):
         form = ReservationForm(request.POST)
         hotel = get_object_or_404(Hotel, hotel_id=kwargs['hotel_id'])
 
+        # TODO: refactor these fields
         svcs = form.get_services(hotel)
-        # form.fields['service'].choices = svcs
         form.fields['service'] = MultipleChoiceField(required=False, choices=svcs, widget=forms.CheckboxSelectMultiple())
 
         bkfst = form.get_breakfast(hotel)
-        # form.fields['breakfast'].choices = bkfst
-        form.fields['breakfast'] = EmptyChoiceField(required=False, choices=bkfst, empty_label='---- none ----')
+        form.fields['breakfast'] = EmptyChoiceField(required=False, choices=bkfst, empty_label='---- none ----') #, widget=CheckboxInput()) # 
 
+        rooms = form.get_rooms(hotel)
+        form.fields['room_choice'] = ChoiceField(required=True, choices=rooms)
+        # END refactor
+
+        user = request.user
         context = {}
         messages = []
         context = {'form': form}
@@ -85,8 +100,77 @@ class ReservationView(View):
             if form.cleaned_data['check_in'] >= form.cleaned_data['check_out']:
                 messages.append('check out must be greater than check in')
 
+            # checks: cc date in future
+
+
+            # we can now persist.
             if len(messages) == 0:
-                 return HttpResponse('you just booked a hotel room')
+
+                new_booking = BookingRequest(
+                    hotel,
+                    form.cleaned_data['room_choice'],
+                    form.cleaned_data['credit_card_number'],
+                    form.cleaned_data['credit_card_type'],
+                    form.cleaned_data['credit_card_month'],
+                    form.cleaned_data['credit_card_year'],
+                    form.cleaned_data['credit_card_code'],
+                    form.cleaned_data['credit_card_address'],
+                    form.cleaned_data['credit_card_name'],
+                    request.user,
+                    datetime.date.today(),
+                    form.cleaned_data['check_in'],
+                    form.cleaned_data['check_out'],
+                    form.cleaned_data['breakfast'],
+                    form.cleaned_data['breakfast_number_orders'],
+                    # form.cleaned_data['svc_id'], # TODO - a list
+                    # form.cleaned_data['discount_id'] # TODO
+
+                )
+                
+                # order of saving:
+                # 1. credit card x
+                # 2. reservation x
+                # 3. room_reservation x
+                # 4. rresb_breakfast
+                # 5.  rresv_service
+
+                @transaction.atomic
+                def save_reservation(n_req: BookingRequest):
+
+                    card = CreditCard()
+                    card.address = n_req.credit_card_address
+                    card.cc_number = n_req.credit_card_number
+                    card.cc_type = n_req.credit_card_type
+                    card.cv_code = n_req.credit_card_code
+                    exp_date = datetime.date(int(n_req.credit_card_year), int(n_req.credit_card_month), 1)
+                    card.expiration_date = exp_date
+
+                    card.save()
+
+                    resv = Reservation()
+                    resv.cid = n_req.cust_id
+                    resv.r_date = n_req.res_date
+                    # grab the key
+                    resv.cc_number = card
+                    
+                    resv.save()
+
+                    room = Room.objects.get(pk=n_req.room)
+                    rr_resv = RoomReservation()
+                    rr_resv.check_in_date = n_req.check_in
+                    rr_resv.check_out_date = n_req.check_out
+                    rr_resv.hotel_id = n_req.hotel
+                    # grab the key
+                    rr_resv.room_no = room
+                    rr_resv.invoice_number = resv
+
+                    rr_resv.save()
+
+
+                save_reservation(new_booking)
+
+                return HttpResponseRedirect(f'/reservations/bookings/')
+                # return HttpResponse('you just booked a hotel room')
 
             context['messages'] = messages
             return render(request, 'bookhotel.html', context)
@@ -97,8 +181,6 @@ class ReservationView(View):
                 messages.append(e)
 
             context['messages'] = messages
-        #hotel = get_object_or_404(Hotel, hotel_id=kwargs['hotel_id'])
-        #initial = {'hotel' : hotel}
 
         return render(request, 'bookhotel.html', context)
 
