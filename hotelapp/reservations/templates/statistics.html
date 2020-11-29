@@ -5,8 +5,12 @@
 {{messages}}
 {% endif %}
 
-{% for r, v in reservations.items %}
-  <p>reservation ID: : {{r.rr_id}} - details : {{v}}</p>
+<p>Statistics:</p>
+
+<h3>{{ title }}</h3>
+
+{% for r in results %}
+  <p>r: {{r}}</p>
 
 {% endfor %}
 

@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.http import HttpResponse, HttpRequest
 from django.views.generic import View, TemplateView
 from django import forms
-from django.db import transaction
+from django.db import connection, transaction
 from datetime import timedelta
 import datetime
 import uuid
@@ -17,7 +17,7 @@ from reservations.fields import EmptyChoiceField, EmptyMultipleChoiceField
 from users.models import CustomUser
 from .forms import HotelSelectionForm, ReservationForm
 
-from .models import Breakfast, CreditCard, Hotel, Reservation, ReservationBreakfast, ReservationService, Room, RoomReservation, Service, BookingRequest
+from .models import Breakfast, CreditCard, Hotel, Reservation, ReservationBreakfast, ReservationService, Room, RoomReservation, RoomReview, Service, BookingRequest
 
 def index(request: HttpRequest) -> HttpResponse:
     context = {}
@@ -48,8 +48,57 @@ def bookings(request: HttpRequest) -> HttpResponse:
     context['reservations'] = rv #  [(k, v) for k, v in rv.items()]
     return render(request, 'bookings.html', context)
 
-def stats_highest_rated_room(request: HttpRequest) -> HttpResponse:
+def general_statistics(request: HttpRequest) -> HttpResponse:
+    from  django.db import connection
     context = {}
+
+    if 'highestratedroom' in request.path:
+        context['title'] = 'highest rated room'
+        sql_stmt = '''
+            SELECT max(rating), r.room_id, r.hotel_id, h.hotel_name 
+            FROM room_review rr
+            JOIN room r on rr.room_id = r.room_id
+            JOIN hotel h on r.hotel_id = r.hotel_id
+            GROUP BY h.hotel_name 
+            '''
+
+    elif 'fivebestcustomers' in request.path:
+        context['title'] = 'five best customers'
+        sql_stmt = 'select "foobar"'
+
+    elif 'highestratedbreakfast' in request.path:
+        context['title'] = 'highest rated breakfast'
+        sql_stmt = '''
+            SELECT max(rating), bb.b_type 
+            FROM breakfast_review br
+            JOIN breakfast bb on br.bid = bb.bid 
+            '''
+
+    elif 'highestratedservice' in request.path:
+        context['title'] = 'highest rated service'
+        sql_stmt = '''
+            SELECT max(rating), s.s_type 
+            FROM service_review sr
+            JOIN service s on sr.sid = s.sid 
+            '''
+
+    else:
+        sql_stmt = 'SELECT "foobar"'
+
+    def dictfetchall(cursor):
+        "Return all rows from a cursor as a dict"
+        columns = [col[0] for col in cursor.description]
+        return [
+            dict(zip(columns, row))
+            for row in cursor.fetchall()
+        ]
+
+    with connection.cursor() as cursor:
+        cursor.execute(sql_stmt)
+
+        results = dictfetchall(cursor)
+    
+    context['results'] = results
     return render(request, 'statistics.html', context)
 
 
