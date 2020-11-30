@@ -15,7 +15,7 @@ import uuid
 from reservations.fields import EmptyChoiceField, EmptyMultipleChoiceField
 
 from users.models import CustomUser
-from .forms import HotelSelectionForm, ReservationForm
+from .forms import HotelSelectionForm, ReservationForm, ReviewForm
 
 from .models import Breakfast, CreditCard, Hotel, Reservation, ReservationBreakfast, ReservationService, Room, RoomReservation, RoomReview, Service, BookingRequest
 
@@ -270,7 +270,35 @@ class ReservationView(View):
         return render(request, 'bookhotel.html', context)
 
 
+def review_list(request: HttpRequest) -> HttpResponse:
+    context = {}
+    rv = {}
+    resvs = request.user.reservation_set.all()
+    for i in resvs:
+        for j in i.roomreservation_set.all():
+            rv[j] = f'date: {i.r_date} - {j.hotel_id} - checkin: {j.check_in_date} through {j.check_out_date}'
+
+    context['reservations'] = rv #  [(k, v) for k, v in rv.items()]
+    return render(request, 'review_list.html', context)
 
 
+def add_reviews(request: HttpRequest)-> HttpResponse:
+    initial = {}
+    context = {}
+    if request.method == "GET":
+        user = request.user
+        initial['user'] = user
+        form = ReviewForm(initial=initial)
 
+        # TODO: since this user is logged on we can use request.
+        room_reservations = form.get_room_reservations(request.user).values()
+        for v in room_reservations:
+            val = room_reservations[v]
+            form.fields[val] = ChoiceField(required=True, choices=val)
+            
 
+        form.get_room_number
+
+        context['form'] = form
+
+    return render(request, 'add_reviews.html', context)

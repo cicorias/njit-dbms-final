@@ -12,4 +12,5 @@ urlpatterns = [
     path('stats/fivebestcustomers', login_required(views.general_statistics, login_url='/users/login'), name='stats_five_best_customers'),
     path('stats/highestratedbreakfast', login_required(views.general_statistics, login_url='/users/login'), name='stats_highest_rated_breakfast'),
     path('stats/highestratedservice', login_required(views.general_statistics, login_url='/users/login'), name='stats_highest_rated_service'),
+    path('addreview', views.add_reviews, name='addreview'),
 ]
