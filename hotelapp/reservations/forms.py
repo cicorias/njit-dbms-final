@@ -147,7 +147,7 @@ class ReviewForm(forms.Form):
         resvs = user.reservation_set.all()
         for i in resvs:
             for j in i.roomreservation_set.all():
-                rv[i.invoice_number] = f'hotel id:{j.hotel_id}'
-                rv[i.invoice_number].append(f'room number:{j.room_no}')
+                rv[i.invoice_number] = f'hotel id:{j.hotel_id.hotel_id} - room number:{j.room_no}' 
+                # rv[i.invoice_number].append(f'room number:{j.room_no}')
 
         return [(k, v) for k, v in rv.items()]

@@ -285,19 +285,21 @@ def review_list(request: HttpRequest) -> HttpResponse:
 def add_reviews(request: HttpRequest)-> HttpResponse:
     initial = {}
     context = {}
+
     if request.method == "GET":
         user = request.user
         initial['user'] = user
         form = ReviewForm(initial=initial)
 
         # TODO: since this user is logged on we can use request.
-        room_reservations = form.get_room_reservations(request.user).values()
-        for v in room_reservations:
-            val = room_reservations[v]
-            form.fields[val] = ChoiceField(required=True, choices=val)
+        room_reservations = form.get_room_reservations(request.user) #.values()
+
+        for k,v in room_reservations:
+            # val = room_reservations[v]
+            form.fields[k] = ChoiceField(required=True, choices=v)
             
 
-        form.get_room_number
+        # form.get_room_number
 
         context['form'] = form
 

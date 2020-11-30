@@ -1,20 +1,16 @@
 {% extends 'resbase.html' %}
 
-{% block title %}Add Reviewß{% endblock %}
+{% block title %}Home{% endblock %}
 
 {% block content %}
-
+{% csrf_token %}
 {% if user.is_authenticated %}
   Hi {{ user.email }}!
   <p><a href="{% url 'logout' %}">Log Out</a></p>
-  <form method="POST">
-    <table>
-        {{ form  }}
-    </table>
-    {% csrf_token %}
-    <button type="submit">Add</button>
-</form>
-  
+  {% for r, v in reservations.items %}
+  <p>reservation ID: : {{r.rr_id}} - details : {{v}}</p>
+  {% endfor %}
+  <p><a href="{% url 'reservations:addreview' %}">Add reviews</a></p>
 {% else %}
   <p>You are not logged in</p>
   <a href="{% url 'login' %}">Log In</a> |
