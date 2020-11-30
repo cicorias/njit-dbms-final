@@ -1,9 +1,12 @@
-from django.shortcuts import render,get_object_or_404
+from django.shortcuts import render,get_object_or_404,redirect
 from django.http import HttpResponse, HttpRequest
 from django.views.generic import View, TemplateView
 from reviews.forms import ReviewForm
 from typing import Any, Dict, Tuple
-from django.forms.fields import ChoiceField
+from django.forms.fields import CharField
+from django import forms
+from reservations.models import RoomReview,Hotel,Room,RoomReservation
+from django.db import transaction
 
 # Create your views here.
 
@@ -13,28 +16,49 @@ def review_list(request: HttpRequest) -> HttpResponse:
     resvs = request.user.reservation_set.all()
     for i in resvs:
         for j in i.roomreservation_set.all():
-            rv[j] = f'date: {i.r_date} - {j.hotel_id} - checkin: {j.check_in_date} through {j.check_out_date}'
+            rv[j.rr_id] = f'date: {i.r_date} - {j.hotel_id} - checkin: {j.check_in_date} through {j.check_out_date}'
 
     context['reservations'] = rv #  [(k, v) for k, v in rv.items()]
     return render(request, 'review_list.html', context)
 
 
-def add_reviews(request: HttpRequest)-> HttpResponse:
-    if request.method == "GET":
+
+def add_reviews(request: HttpRequest, id):
+    if request.method == "POST":
+        form = ReviewForm(request.POST)
+        hotel_id=RoomReservation.objects.get(rr_id=id).hotel_id_id
+        hotel = get_object_or_404(Hotel,pk=hotel_id)
+        room_no = RoomReservation.objects.get(rr_id=id).room_no_id
+        room = get_object_or_404(Room,room_no= room_no)
+        
+
+        if form.is_valid():
+
+            roomreview = RoomReview()
+            roomreview.hotel_id = hotel
+            roomreview.room_no = room
+            roomreview.rating = form.data['rating']
+            roomreview.text_content = form.data['text']
+            roomreview.save()
+
+            return redirect("review_list")
+
+    else :
         initial = {}
         context = {}
         user = request.user
         initial['user'] = user
         form = ReviewForm(initial=initial)
 
-        room_reservations = form.get_room_reservations(user).values()
-        for v in room_reservations:
-            val = room_reservations[v]
-            form.fields[val] = ChoiceField(required=True, choices=val)
-            
+        room_reservations = form.get_room_reservations(user)
 
-        form.get_room_number
+        for i in room_reservations:
+            values = room_reservations.get(i)
+            
+            form.fields['hotel_id'] = CharField(initial=values[0], required=False, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
+            form.fields['room_no'] = CharField(initial=values[1], required=False, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
 
         context['form'] = form
+        
 
     return render(request, 'add_reviews.html', context)

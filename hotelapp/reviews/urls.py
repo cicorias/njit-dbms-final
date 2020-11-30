@@ -6,5 +6,5 @@ app_name = 'reviews'
 
 urlpatterns = [
     path('', review_list, name='review_list' ),
-    path('addreview', add_reviews, name='addreview'),
+    path('addreview/<int:id>', add_reviews, name='addreview'),
 ]    

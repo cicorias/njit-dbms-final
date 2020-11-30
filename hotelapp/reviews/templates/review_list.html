@@ -9,9 +9,9 @@
   Hi {{ user.email }}!
   <p><a href="{% url 'logout' %}">Log Out</a></p>
   {% for r, v in reservations.items %}
-  <p>reservation ID: : {{r.rr_id}} - details : {{v}}</p>
+  <p>reservation ID: : {{r}} - details : {{v}}</p><p><a href="{% url 'reviews:addreview' r %}">Add reviews</a></p>
   {% endfor %}
-  <p><a href="{% url 'reviews:addreview' %}">Add reviews</a></p>
+  
 {% else %}
   <p>You are not logged in</p>
   <a href="{% url 'login' %}">Log In</a> |
