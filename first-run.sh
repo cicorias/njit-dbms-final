@@ -13,7 +13,8 @@ echo "using $DBFILE"
 
 for f in ../data/*.sql;
 do 
-  sqlite3 $DBFILE ".read $f"
+  #sqlite3 $DBFILE ".read $f"
+  python ./manage.py dbshell ".read $f"
 done
 
 echo "at this point you should be able to runserver and see some seed data."
