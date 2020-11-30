@@ -227,14 +227,15 @@ class DiscountedRoom(models.Model):
 class RoomReview(models.Model):
   rid = models.AutoField(primary_key=True, db_column='rid')
   cid = models.ForeignKey(CustomUser, db_column='cid', on_delete=CASCADE)
-  room_id = models.ForeignKey(Room, db_column='room_id', on_delete=CASCADE)
+  hotel_id = models.ForeignKey(Hotel, db_column='hotel_id', on_delete=CASCADE)
+  room_no = models.ForeignKey(Room, db_column='room_no', on_delete=CASCADE)
 
   rating = models.PositiveIntegerField(db_column='rating',
             default=0, validators=[MinValueValidator(0), MaxValueValidator(10)])
   text_content = models.CharField(max_length=40, db_column='text')
 
   def __str__(self) -> str:
-    return f'{self.room_id} - rid: {self.rid}'
+    return f'{self.room_no} - {self.hotel_id} - rid: {self.rid}'
 
   class Meta:
     db_table = 'room_review'
