@@ -1,3 +1,4 @@
+import datetime
 from typing import NamedTuple, cast
 from collections import namedtuple
 from django.db import models
@@ -228,6 +229,7 @@ class RoomReview(models.Model):
   rid = models.AutoField(primary_key=True, db_column='rid')
   cid = models.ForeignKey(CustomUser, db_column='cid', on_delete=CASCADE)
   room_id = models.ForeignKey(Room, db_column='room_id', on_delete=CASCADE)
+  review_date = models.DateField(db_column='review_date', null=True, auto_now_add=True)
 
   rating = models.PositiveIntegerField(db_column='rating',
             default=0, validators=[MinValueValidator(0), MaxValueValidator(10)])
@@ -248,6 +250,7 @@ class BreakfastReview(models.Model):
   rid = models.AutoField(primary_key=True, db_column='rid')
   cid = models.ForeignKey(CustomUser, db_column='cid', on_delete=CASCADE)
   bid = models.ForeignKey(Breakfast, db_column='bid', on_delete=CASCADE)
+  review_date = models.DateField(db_column='review_date', auto_now_add=True)
 
   rating = models.PositiveIntegerField(db_column='rating',
             default=0, validators=[MinValueValidator(0), MaxValueValidator(10)])
@@ -268,6 +271,7 @@ class ServiceReview(models.Model):
   rid = models.AutoField(primary_key=True, db_column='rid')
   cid = models.ForeignKey(CustomUser, db_column='cid', on_delete=CASCADE)
   sid = models.ForeignKey(Service, db_column='sid', on_delete=CASCADE)
+  review_date = models.DateField(db_column='review_date', auto_now_add=True)
 
   rating = models.PositiveIntegerField(db_column='rating',
           default=0, validators=[MinValueValidator(0), MaxValueValidator(10)])
