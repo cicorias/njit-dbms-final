@@ -118,20 +118,9 @@ class HotelSelectionForm(forms.Form):
 
 class ReviewForm(forms.Form):
 
-    hotel = forms.CharField(widget=forms.TextInput(attrs={'readonly': 'readonly'}))
-    RATING_CHOICES = (
-        ("1", "1"),
-        ("2", "2"),
-        ("3", "3"),
-        ("4", "4"),
-        ("5", "5"),
-        ("6", "6"),
-        ("7", "7"),
-        ("8", "8"),
-        ("9", "9"),
-        ("10", "10")
-    )
-    rating = forms.ChoiceField(required=True, choices=RATING_CHOICES)
+    hotel_id = forms.CharField(widget=forms.TextInput(attrs={'readonly': 'readonly'}))
+    room_no = forms.CharField(widget=forms.TextInput(attrs={'readonly': 'readonly'}))
+    rating = forms.IntegerField(required=True,max_value=10,min_value=1)
     text = forms.CharField(max_length=40)
 
     def __init__(self, *args, **kwargs):
@@ -147,7 +136,29 @@ class ReviewForm(forms.Form):
         resvs = user.reservation_set.all()
         for i in resvs:
             for j in i.roomreservation_set.all():
-                rv[i.invoice_number] = f'hotel id:{j.hotel_id.hotel_id} - room number:{j.room_no}' 
-                # rv[i.invoice_number].append(f'room number:{j.room_no}')
+                rv[j.rr_id] = [j.hotel_id,j.room_no]
 
-        return [(k, v) for k, v in rv.items()]
+        return rv
+
+    # TODO: add for services
+    # TODO: add for breakfast
+    @staticmethod
+    def get_room_services(user: CustomUser) -> Dict:
+        rv = {}
+        resvs = user.reservation_set.all()
+        for i in resvs:
+            for j in i.roomreservation_set.all():
+                rv[j.rr_id] = [j.hotel_id,j.room_no]
+
+        return rv
+
+    @staticmethod
+    def get_room_breakfast(user: CustomUser) -> Dict:
+        rv = {}
+        resvs = user.reservation_set.all()
+        for i in resvs:
+            for j in i.roomreservation_set.all():
+                rv[j.rr_id] = [j.hotel_id,j.room_no]
+
+        return rv
+
