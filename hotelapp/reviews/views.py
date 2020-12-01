@@ -1,5 +1,5 @@
 from django.shortcuts import render,get_object_or_404,redirect
-from django.http import HttpResponse, HttpRequest
+from django.http import HttpResponse, HttpRequest,HttpResponseRedirect
 from django.views.generic import View, TemplateView
 from reviews.forms import ReviewForm
 from typing import Any, Dict, Tuple
@@ -39,7 +39,7 @@ def add_reviews(request: HttpRequest, id):
             roomreview.cid = request.user
             roomreview.save()
 
-            return redirect("reviews")
+            return HttpResponseRedirect(f'/reservations/review/')
 
     else :
         initial = {}

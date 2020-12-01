@@ -323,7 +323,7 @@ def add_reviews(request: HttpRequest, id):
             roomreview.text_content = form.data['text']
             roomreview.save()
 
-            return redirect("review")
+            return HttpResponseRedirect(f'/reservations/review/')
 
     else :
         initial = {}
