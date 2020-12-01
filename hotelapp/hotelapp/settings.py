@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'formtools',
     'reservations.apps.ReservationsConfig',  # vs reservations
     'users.apps.UsersConfig',  # vs users
+    'reviews.apps.ReviewsConfig', # vs reviews
 ]
 
 MIDDLEWARE = [
