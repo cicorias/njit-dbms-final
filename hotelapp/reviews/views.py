@@ -26,8 +26,6 @@ def review_list(request: HttpRequest) -> HttpResponse:
 def add_reviews(request: HttpRequest, id):
     if request.method == "POST":
         form = ReviewForm(request.POST)
-        hotel_id=RoomReservation.objects.get(rr_id=id).hotel_id_id
-        hotel = get_object_or_404(Hotel,pk=hotel_id)
         room_no = RoomReservation.objects.get(rr_id=id).room_no_id
         room = get_object_or_404(Room,room_no= room_no)
         
@@ -35,13 +33,13 @@ def add_reviews(request: HttpRequest, id):
         if form.is_valid():
 
             roomreview = RoomReview()
-            roomreview.hotel_id = hotel
-            roomreview.room_no = room
+            roomreview.room_id = room
             roomreview.rating = form.data['rating']
             roomreview.text_content = form.data['text']
+            roomreview.cid = request.user
             roomreview.save()
 
-            return redirect("review_list")
+            return redirect("reviews")
 
     else :
         initial = {}

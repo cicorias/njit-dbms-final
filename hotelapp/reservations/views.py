@@ -276,7 +276,7 @@ def review_list(request: HttpRequest) -> HttpResponse:
     resvs = request.user.reservation_set.all()
     for i in resvs:
         for j in i.roomreservation_set.all():
-            rv[j] = f'date: {i.r_date} - {j.hotel_id} - checkin: {j.check_in_date} through {j.check_out_date}'
+            rv[j.rr_id] = f'date: {i.r_date} - {j.hotel_id} - checkin: {j.check_in_date} through {j.check_out_date}'
 
     context['reservations'] = rv #  [(k, v) for k, v in rv.items()]
     return render(request, 'review_list.html', context)
@@ -323,7 +323,7 @@ def add_reviews(request: HttpRequest, id):
             roomreview.text_content = form.data['text']
             roomreview.save()
 
-            return redirect("review_list")
+            return redirect("review")
 
     else :
         initial = {}
