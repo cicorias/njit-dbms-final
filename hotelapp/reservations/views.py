@@ -17,7 +17,7 @@ from reservations.fields import EmptyChoiceField, EmptyMultipleChoiceField
 from users.models import CustomUser
 from .forms import HotelSelectionForm, ReservationForm, ReviewForm
 
-from .models import Breakfast, CreditCard, Hotel, Reservation, ReservationBreakfast, ReservationService, Room, RoomReservation, RoomReview, Service, BookingRequest
+from .models import Breakfast, BreakfastReview, CreditCard, Hotel, Reservation, ReservationBreakfast, ReservationService, Room, RoomReservation, RoomReview, Service, BookingRequest, ServiceReview
 
 def index(request: HttpRequest) -> HttpResponse:
     context = {}
@@ -272,35 +272,118 @@ class ReservationView(View):
 
 def review_list(request: HttpRequest) -> HttpResponse:
     context = {}
-    rv = {}
+    room_res_rv = {}
+    room_svc_rv = {}
+    room_bkfst_rv = {}
+
     resvs = request.user.reservation_set.all()
+    
     for i in resvs:
         for j in i.roomreservation_set.all():
-            rv[j] = f'date: {i.r_date} - {j.hotel_id} - checkin: {j.check_in_date} through {j.check_out_date}'
+            room_res_rv[j.rr_id] = f'date: {i.r_date} - {j.hotel_id} - checkin: {j.check_in_date} through {j.check_out_date}'
 
-    context['reservations'] = rv #  [(k, v) for k, v in rv.items()]
+        for j in i.reservationservice_set.all():
+            room_svc_rv[j.rs_id] = f'date: {i.r_date} - {j.sid}'
+
+        for j in i.reservationbreakfast_set.all():
+            room_bkfst_rv[j.rb_id] = f'date: {i.r_date} - {j.bid}'
+            
+
+    context['reservations'] = room_res_rv
+    context['services'] = room_svc_rv
+    context['breakfasts'] = room_bkfst_rv
+
+    # TODO: get breakfast collection
+    # TODO: get service collection
     return render(request, 'review_list.html', context)
 
 
-def add_reviews(request: HttpRequest)-> HttpResponse:
+def add_reviews(request: HttpRequest, type: str, id: int)-> HttpResponse:
     initial = {}
     context = {}
 
-    if request.method == "GET":
+    # TODO: make conditional on type of review selected.
+    
+    if request.method == "POST":
+        form = ReviewForm(request.POST)
+        
+        if type == 'reservation':
+            hotel_id=RoomReservation.objects.get(rr_id=id).hotel_id_id
+            hotel = get_object_or_404(Hotel,pk=hotel_id)
+            room_no = RoomReservation.objects.get(rr_id=id).room_no_id
+            room = get_object_or_404(Room,room_no= room_no)
+            
+            roomreview, created = RoomReview.objects.get_or_create(cid=request.user, room_id=room)
+
+            if form.is_valid():
+                roomreview.hotel_id = hotel
+                roomreview.room_no = room
+                roomreview.room_id = room
+                roomreview.rating = form.data['rating']
+                roomreview.text_content = form.data['text']
+                roomreview.cid = request.user
+
+                roomreview.save()
+                
+                return HttpResponseRedirect(f'/reservations/review/')
+
+        if type == 'service':
+            svc_id = get_object_or_404(ReservationService,pk=id)
+            servicereview, created = ServiceReview.objects.get_or_create(cid=request.user, sid=svc_id)
+
+            if form.is_valid():
+                servicereview.cid = request.user
+                servicereview.sid = svc_id 
+                servicereview.rating = form.data['rating']
+                servicereview.text_content = form.data['text']
+                servicereview.cid = request.user
+
+                servicereview.save()
+
+                return HttpResponseRedirect(f'/reservations/review')
+
+        if type == 'breakfast':
+            brk_id = get_object_or_404(ReservationBreakfast, pk=id)
+            breakfastreview, created = BreakfastReview.objects.get_or_create(cid=request.user, bid=brk_id)
+
+            if form.is_valid():
+                breakfastreview.cid = request.user
+                breakfastreview.bid = brk_id
+                breakfastreview.rating = form.data['rating']
+                breakfastreview.text_content = form.data['text']
+                breakfastreview.cid = request.user
+
+                breakfastreview.save()
+
+                return HttpResponseRedirect(f'/reservations/review')
+
+
+        return HttpResponse('something unexptected.')
+
+    else :
         user = request.user
         initial['user'] = user
         form = ReviewForm(initial=initial)
+        
+        if type == 'reservation':
+            room_reservations = form.get_room_reservations(user)
+            values = room_reservations.get(id)
+            form.fields['hotel_id'] = CharField(initial=values[0], required=False, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
+            form.fields['room_no'] = CharField(initial=values[1], required=False, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
 
-        # TODO: since this user is logged on we can use request.
-        room_reservations = form.get_room_reservations(request.user) #.values()
+        if type == 'service':
+            room_services = form.get_room_services(user)
+            values = room_services.get(id)
+            form.fields['reserviation_id'] = CharField(initial=values[0], required=False, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
+            form.fields['service'] = CharField(initial=values[1], required=False, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
 
-        for k,v in room_reservations:
-            # val = room_reservations[v]
-            form.fields[k] = ChoiceField(required=True, choices=v)
-            
-
-        # form.get_room_number
+        if type == 'breakfast':
+            room_breakfasts = form.get_room_breakfast(user)
+            values = room_breakfasts.get(id)
+            form.fields['reserviation_id'] = CharField(initial=values[0], required=False, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
+            form.fields['breakfast'] = CharField(initial=values[1], required=False, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
 
         context['form'] = form
+
 
     return render(request, 'add_reviews.html', context)

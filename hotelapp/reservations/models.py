@@ -249,7 +249,7 @@ class RoomReview(models.Model):
 class BreakfastReview(models.Model):
   rid = models.AutoField(primary_key=True, db_column='rid')
   cid = models.ForeignKey(CustomUser, db_column='cid', on_delete=CASCADE)
-  bid = models.ForeignKey(Breakfast, db_column='bid', on_delete=CASCADE)
+  bid = models.ForeignKey(ReservationBreakfast, db_column='bid', on_delete=CASCADE)
   review_date = models.DateField(db_column='review_date', auto_now_add=True)
 
   rating = models.PositiveIntegerField(db_column='rating',
@@ -270,7 +270,7 @@ class BreakfastReview(models.Model):
 class ServiceReview(models.Model):
   rid = models.AutoField(primary_key=True, db_column='rid')
   cid = models.ForeignKey(CustomUser, db_column='cid', on_delete=CASCADE)
-  sid = models.ForeignKey(Service, db_column='sid', on_delete=CASCADE)
+  sid = models.ForeignKey(ReservationService, db_column='sid', on_delete=CASCADE)
   review_date = models.DateField(db_column='review_date', auto_now_add=True)
 
   rating = models.PositiveIntegerField(db_column='rating',

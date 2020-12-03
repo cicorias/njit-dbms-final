@@ -7,10 +7,27 @@
 {% if user.is_authenticated %}
   Hi {{ user.email }}!
   <p><a href="{% url 'logout' %}">Log Out</a></p>
+  <h2>Reservations</h2>
+  {% with rtype="reservation" %}
   {% for r, v in reservations.items %}
-  <p>reservation ID: : {{r.rr_id}} - details : {{v}}</p>
+  <p>reservation ID: : {{r.rr_id}} - details : {{v}}><a href="{% url 'reservations:addreview' rtype r %}">Add review</a></p>
   {% endfor %}
-  <p><a href="{% url 'reservations:addreview' %}">Add reviews</a></p>
+  {% endwith %}
+
+  <h2>Breakfasts</h2>
+  {% with rtype="breakfast" %}
+  {% for r, v in breakfasts.items %}
+  <p>breakfast ID: : {{r.rr_id}} - details : {{v}}><a href="{% url 'reservations:addreview' rtype r %}">Add review</a></p>
+  {% endfor %}
+  {% endwith %}
+
+  <h2>Services</h2>
+  {% with rtype="service" %}
+  {% for r, v in services.items %}
+  <p>service ID: :{{r}} - details : {{v}}><a href="{% url 'reservations:addreview' rtype r %}">Add review</a></p>
+  {% endfor %}
+  {% endwith %}
+
 {% else %}
   <p>You are not logged in</p>
   <a href="{% url 'login' %}">Log In</a> |
