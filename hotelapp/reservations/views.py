@@ -17,7 +17,7 @@ from reservations.fields import EmptyChoiceField, EmptyMultipleChoiceField
 from users.models import CustomUser
 from .forms import HotelSelectionForm, ReservationForm, ReviewForm
 
-from .models import Breakfast, CreditCard, Hotel, Reservation, ReservationBreakfast, ReservationService, Room, RoomReservation, RoomReview, Service, BookingRequest
+from .models import Breakfast, BreakfastReview, CreditCard, Hotel, Reservation, ReservationBreakfast, ReservationService, Room, RoomReservation, RoomReview, Service, BookingRequest, ServiceReview
 
 def index(request: HttpRequest) -> HttpResponse:
     context = {}
@@ -306,28 +306,59 @@ def add_reviews(request: HttpRequest, type: str, id: int)-> HttpResponse:
     
     if request.method == "POST":
         form = ReviewForm(request.POST)
-        hotel_id=RoomReservation.objects.get(rr_id=id).hotel_id_id
-        hotel = get_object_or_404(Hotel,pk=hotel_id)
-        room_no = RoomReservation.objects.get(rr_id=id).room_no_id
-        room = get_object_or_404(Room,room_no= room_no)
         
-        roomreview, created = RoomReview.objects.get_or_create(cid=request.user, room_id=room)
+        if type == 'reservation':
+            hotel_id=RoomReservation.objects.get(rr_id=id).hotel_id_id
+            hotel = get_object_or_404(Hotel,pk=hotel_id)
+            room_no = RoomReservation.objects.get(rr_id=id).room_no_id
+            room = get_object_or_404(Room,room_no= room_no)
+            
+            roomreview, created = RoomReview.objects.get_or_create(cid=request.user, room_id=room)
 
-        if form.is_valid():
-            # roomreview = RoomReview()
-            roomreview.hotel_id = hotel
-            roomreview.room_no = room
-            roomreview.room_id = room
-            roomreview.rating = form.data['rating']
-            roomreview.text_content = form.data['text']
-            roomreview.cid = request.user
+            if form.is_valid():
+                roomreview.hotel_id = hotel
+                roomreview.room_no = room
+                roomreview.room_id = room
+                roomreview.rating = form.data['rating']
+                roomreview.text_content = form.data['text']
+                roomreview.cid = request.user
 
-            if created:
                 roomreview.save()
-            else:
-                roomreview.save() # force_update=True)
+                
+                return HttpResponseRedirect(f'/reservations/review/')
 
-            return HttpResponseRedirect(f'/reservations/review/')
+        if type == 'service':
+            svc_id = get_object_or_404(ReservationService,pk=id)
+            servicereview, created = ServiceReview.objects.get_or_create(cid=request.user, sid=svc_id)
+
+            if form.is_valid():
+                servicereview.cid = request.user
+                servicereview.sid = svc_id 
+                servicereview.rating = form.data['rating']
+                servicereview.text_content = form.data['text']
+                servicereview.cid = request.user
+
+                servicereview.save()
+
+                return HttpResponseRedirect(f'/reservations/review')
+
+        if type == 'breakfast':
+            brk_id = get_object_or_404(ReservationBreakfast, pk=id)
+            breakfastreview, created = BreakfastReview.objects.get_or_create(cid=request.user, bid=brk_id)
+
+            if form.is_valid():
+                breakfastreview.cid = request.user
+                breakfastreview.bid = brk_id
+                breakfastreview.rating = form.data['rating']
+                breakfastreview.text_content = form.data['text']
+                breakfastreview.cid = request.user
+
+                breakfastreview.save()
+
+                return HttpResponseRedirect(f'/reservations/review')
+
+
+        return HttpResponse('something unexptected.')
 
     else :
         user = request.user
