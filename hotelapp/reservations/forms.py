@@ -118,8 +118,6 @@ class HotelSelectionForm(forms.Form):
 
 class ReviewForm(forms.Form):
 
-    hotel_id = forms.CharField(widget=forms.TextInput(attrs={'readonly': 'readonly'}))
-    room_no = forms.CharField(widget=forms.TextInput(attrs={'readonly': 'readonly'}))
     rating = forms.IntegerField(required=True,max_value=10,min_value=1)
     text = forms.CharField(max_length=40)
 
@@ -146,9 +144,10 @@ class ReviewForm(forms.Form):
     def get_room_services(user: CustomUser) -> Dict:
         rv = {}
         resvs = user.reservation_set.all()
-        for i in resvs:
-            for j in i.roomreservation_set.all():
-                rv[j.rr_id] = [j.hotel_id,j.room_no]
+        
+        for rr in resvs:
+                for rs in rr.reservationservice_set.all():
+                    rv[rs.rs_id] = [rs.rr_id, rs.sid]
 
         return rv
 
@@ -156,9 +155,9 @@ class ReviewForm(forms.Form):
     def get_room_breakfast(user: CustomUser) -> Dict:
         rv = {}
         resvs = user.reservation_set.all()
-        for i in resvs:
-            for j in i.roomreservation_set.all():
-                rv[j.rr_id] = [j.hotel_id,j.room_no]
+        for rr in resvs:
+            for rb in rr.reservationbreakfast_set.all():
+                rv[rb.rb_id] = [rb.rr_id, rb.bid]
 
         return rv
 

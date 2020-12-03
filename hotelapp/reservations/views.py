@@ -272,21 +272,33 @@ class ReservationView(View):
 
 def review_list(request: HttpRequest) -> HttpResponse:
     context = {}
-    rv = {}
+    room_res_rv = {}
+    room_svc_rv = {}
+    room_bkfst_rv = {}
+
     resvs = request.user.reservation_set.all()
+    
     for i in resvs:
         for j in i.roomreservation_set.all():
-            rv[j] = f'date: {i.r_date} - {j.hotel_id} - checkin: {j.check_in_date} through {j.check_out_date}'
+            room_res_rv[j.rr_id] = f'date: {i.r_date} - {j.hotel_id} - checkin: {j.check_in_date} through {j.check_out_date}'
 
-    context['reservations'] = rv #  [(k, v) for k, v in rv.items()]
+        for j in i.reservationservice_set.all():
+            room_svc_rv[j.rs_id] = f'date: {i.r_date} - {j.sid}'
+
+        for j in i.reservationbreakfast_set.all():
+            room_bkfst_rv[j.rb_id] = f'date: {i.r_date} - {j.bid}'
+            
+
+    context['reservations'] = room_res_rv
+    context['services'] = room_svc_rv
+    context['breakfasts'] = room_bkfst_rv
 
     # TODO: get breakfast collection
-
     # TODO: get service collection
     return render(request, 'review_list.html', context)
 
 
-def add_reviews(request: HttpRequest, id: int)-> HttpResponse:
+def add_reviews(request: HttpRequest, type: str, id: int)-> HttpResponse:
     initial = {}
     context = {}
 
@@ -318,18 +330,27 @@ def add_reviews(request: HttpRequest, id: int)-> HttpResponse:
             return HttpResponseRedirect(f'/reservations/review/')
 
     else :
-
         user = request.user
         initial['user'] = user
         form = ReviewForm(initial=initial)
-
-        room_reservations = form.get_room_reservations(user)
-
-        for i in room_reservations:
-            values = room_reservations.get(i)
-            
+        
+        if type == 'reservation':
+            room_reservations = form.get_room_reservations(user)
+            values = room_reservations.get(id)
             form.fields['hotel_id'] = CharField(initial=values[0], required=False, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
             form.fields['room_no'] = CharField(initial=values[1], required=False, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
+
+        if type == 'service':
+            room_services = form.get_room_services(user)
+            values = room_services.get(id)
+            form.fields['reserviation_id'] = CharField(initial=values[0], required=False, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
+            form.fields['service'] = CharField(initial=values[1], required=False, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
+
+        if type == 'breakfast':
+            room_breakfasts = form.get_room_breakfast(user)
+            values = room_breakfasts.get(id)
+            form.fields['reserviation_id'] = CharField(initial=values[0], required=False, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
+            form.fields['breakfast'] = CharField(initial=values[1], required=False, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
 
         context['form'] = form
 
