@@ -89,38 +89,49 @@ def general_statistics(request: HttpRequest) -> HttpResponse:
                 context['title'] = 'five best customers'
                 sql_stmt = '''
                         -- For a given time period (begin date and end date) compute the 5 best customers (in terms of money spent in reservations).
-                        SELECT c.cid,c.friendly_name,
-                        r.price*(case when d.discount is null then 1 else d.discount end)+b.b_price+s.s_price as Total_Amount,rv.invoice_number
-                        FROM room_reservation rr
-                        JOIN rresv_breakfast rb on
-                            rr.invoice_number = rb.rr_id
-                        JOIN rresv_service rs on
-                            rr.invoice_number = rs.rr_id
-                        JOIN room r on
-                            rr.hotel_id = r.hotel_id
-                            and rr.room_no = r.room_no
-                        JOIN discounted_room d on
-                            r.room_id = d.room_id
-                            and d.room_id in (
-                                SELECT r.room_id
-                                FROM discounted_room d LEFT OUTER JOIN room r on
-                                d.room_id = r.room_id
-                                WHERE d.start_date >= :start
-                                AND d.end_date <= :end
-                            )
-                        JOIN breakfast b on
-                            rb.bid = b.bid
-                        JOIN service s on
-                            rs.sid = s.sid
-                        JOIN reservation rv on
-                            rv.invoice_number = rr.invoice_number
-                        JOIN customer c on
-                            c.cid = rv.cid
-                        WHERE
-                            rr.check_in_date >= :start
-                            AND rr.check_out_date <= :end
-                        ORDER BY Total_Amount desc
-                        LIMIT 5
+                        SELECT c.cid,c.friendly_name,sum(Total_Amount) as Amount
+                        FROM (SELECT rv.cid,
+                                r.price*(case when d.discount is null then 1
+                                else d.discount
+                            end)+ b.b_price + s.s_price as Total_Amount,
+                                rv.invoice_number
+                            FROM
+                                room_reservation rr
+                            JOIN rresv_breakfast rb on
+                                rr.invoice_number = rb.rr_id
+                            JOIN rresv_service rs on
+                                rr.invoice_number = rs.rr_id
+                            JOIN room r on
+                                rr.hotel_id = r.hotel_id
+                                and rr.room_no = r.room_no
+                            JOIN (
+                                SELECT
+                                    r.room_id,
+                                    d.discount
+                                FROM
+                                    discounted_room d
+                                LEFT OUTER JOIN room r on
+                                    d.room_id = r.room_id
+                                WHERE
+                                    d.start_date >= '2020-02-01'
+                                    AND d.end_date <= '2021-02-01') d on
+                                r.room_id = d.room_id
+                            JOIN breakfast b on
+                                rb.bid = b.bid
+                            JOIN service s on
+                                rs.sid = s.sid
+                            JOIN reservation rv on
+                                rv.invoice_number = rr.invoice_number
+                            WHERE
+                                rr.check_in_date >= '2020-02-01'
+                                AND rr.check_out_date <= '2021-02-01'
+                            ) as temp , customer c
+                            where c.cid = temp.cid
+                            GROUP BY c.cid 
+                            ORDER BY
+                                Amount desc
+                            LIMIT 5;
+
                         '''
 
             elif form.cleaned_data['report_type'] == '3':
