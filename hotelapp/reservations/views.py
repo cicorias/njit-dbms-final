@@ -89,24 +89,51 @@ def general_statistics(request: HttpRequest) -> HttpResponse:
                 context['title'] = 'five best customers'
                 sql_stmt = '''
                         -- For a given time period (begin date and end date) compute the 5 best customers (in terms of money spent in reservations).
-                        select
-                            r.cid,
-                            c.first_name,
+                        SELECT
+                            c.cid,
                             c.email,
-                            sum(((JULIANDAY(rr.check_out_date) - JULIANDAY(rr.check_in_date)) * rm.price)) as cost
-                        from
-                            reservation r
-                        join room_reservation rr on
-                            rr.invoice_number = r.invoice_number
-                        join room rm on
-                            rm.room_no = rr.room_no
-                        join customer c on
-                            c.cid = r.cid
+                            c.friendly_name,
+                            r.price*
+                            (case when d.discount is null then 1
+                            else d.discount
+                        end)+ b.b_price + s.s_price as Total_Amount,
+                            rv.invoice_number
+                        FROM
+                            room_reservation rr
+                        JOIN rresv_breakfast rb on
+                            rr.invoice_number = rb.rr_id
+                        JOIN rresv_service rs on
+                            rr.invoice_number = rs.rr_id
+                        JOIN room r on
+                            rr.hotel_id = r.hotel_id
+                            and rr.room_no = r.room_no
+                        JOIN (
+                            SELECT
+                                r.room_id,
+                                d.discount
+                            FROM
+                                discounted_room d
+                            LEFT OUTER JOIN room r on
+                                d.room_id = r.room_id
+                            WHERE
+                                d.start_date >= :start
+                                AND d.end_date <= :end) d on
+                            r.room_id = d.room_id
+                        JOIN breakfast b on
+                            rb.bid = b.bid
+                        JOIN service s on
+                            rs.sid = s.sid
+                        JOIN reservation rv on
+                            rv.invoice_number = rr.invoice_number
+                        JOIN customer c on
+                            c.cid = rv.cid
                         WHERE
                             rr.check_in_date >= :start
-                            AND rr.check_in_date <= :end
-                        group by
-                        r.cid
+                            AND rr.check_out_date <= :end
+                        GROUP BY c.cid
+                        ORDER BY
+                            Total_Amount desc
+                        LIMIT 5
 
                         '''
 
