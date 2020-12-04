@@ -10,7 +10,7 @@
   <h2>Reservations</h2>
   {% with rtype="reservation" %}
   {% for r, v in reservations.items %}
-  <p>reservation ID: : {{r.rr_id}} - details : {{v}}><a href="{% url 'reservations:addreview' rtype r %}">Add review</a></p>
+  <p>room reservation ID: : {{r.rr_id}} - details : {{v}}><a href="{% url 'reservations:addreview' rtype r %}">Add review</a></p>
   {% endfor %}
   {% endwith %}
 

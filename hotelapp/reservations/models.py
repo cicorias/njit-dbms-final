@@ -228,7 +228,7 @@ class DiscountedRoom(models.Model):
 class RoomReview(models.Model):
   rid = models.AutoField(primary_key=True, db_column='rid')
   cid = models.ForeignKey(CustomUser, db_column='cid', on_delete=CASCADE)
-  room_id = models.ForeignKey(Room, db_column='room_id', on_delete=CASCADE)
+  rr_id = models.ForeignKey(RoomReservation, db_column='rr_id', on_delete=CASCADE)
   review_date = models.DateField(db_column='review_date', null=True, auto_now_add=True)
 
   rating = models.PositiveIntegerField(db_column='rating',
@@ -241,7 +241,7 @@ class RoomReview(models.Model):
   class Meta:
     db_table = 'room_review'
     constraints = [models.UniqueConstraint(
-              fields=['cid', 'room_id'],
+              fields=['cid', 'rr_id'],
               name='unique roomreview'
     )]  
 
