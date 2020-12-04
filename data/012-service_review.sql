@@ -1,7 +1,8 @@
-INSERT INTO service_review
-(rid, rating, "text", cid, sid, review_date)
-VALUES(1, 5, 'broke my headlight', 1, 1, '2020-11-15');
-INSERT INTO service_review
-(rid, rating, "text", cid, sid, review_date)
-VALUES(2, 3, 'fast', 1, 2, '2020-11-15');
-
+INSERT INTO service_review (review_date,rating,"text",cid,sid) VALUES
+	 ('2020-11-15',4,'44',1,1),
+	 ('2020-11-15',3,'fast',1,2),
+	 ('2020-12-04',9,'4',2,3),
+	 ('2020-12-04',9,'222',2,4),
+	 ('2020-12-04',5,'5',2,5),
+	 ('2020-12-04',3,'3',3,8),
+	 ('2020-12-04',8,'6',3,7);
