@@ -89,7 +89,24 @@ def general_statistics(request: HttpRequest) -> HttpResponse:
                 context['title'] = 'five best customers'
                 sql_stmt = '''
                         -- For a given time period (begin date and end date) compute the 5 best customers (in terms of money spent in reservations).
-                        select "foobar"
+                        select
+                            r.cid,
+                            c.first_name,
+                            c.email,
+                            sum(((JULIANDAY(rr.check_out_date) - JULIANDAY(rr.check_in_date)) * rm.price)) as cost
+                        from
+                            reservation r
+                        join room_reservation rr on
+                            rr.invoice_number = r.invoice_number
+                        join room rm on
+                            rm.room_no = rr.room_no
+                        join customer c on
+                            c.cid = r.cid
+                        WHERE
+                            rr.check_in_date >= :start
+                            AND rr.check_in_date <= :end
+                        group by
+                        r.cid
 
                         '''
 
