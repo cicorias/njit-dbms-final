@@ -48,61 +48,101 @@ def bookings(request: HttpRequest) -> HttpResponse:
     context['reservations'] = rv #  [(k, v) for k, v in rv.items()]
     return render(request, 'bookings.html', context)
 
-def general_statistics(request: HttpRequest, start:date = date.today(), end:date = date.today()) -> HttpResponse:
+def general_statistics(request: HttpRequest) -> HttpResponse:
     context = {}
     if request.method == 'POST':
         from  django.db import connection
 
         form = ReportForm(request.POST)
-        parms = {'start': '2020-11-01', 'end': '2021-02-01'}
-
         if form.is_valid():
+            parms = {'start': form.cleaned_data['start_date'], 'end': form.cleaned_data['end_date'] }
             if form.cleaned_data['report_type'] == '1':
                 context['title'] = 'highest rated room'
                 sql_stmt = '''
                     -- For a given time period (begin date and end date) compute the highest rated room type for each hotel.
-
                     SELECT
                         max(rating),
                         r.room_id,
                         r.hotel_id,
                         h.hotel_name
                     FROM
-                        room_reservation rr -- filter on these dates
+                        room_reservation rr
+                        -- filter on these dates
                     JOIN room r on
                         rr.room_no = r.room_id
                     JOIN reservation resv on
                         rr.invoice_number = resv.invoice_number
-                    JOIN customer c on 
+                    JOIN customer c on
                         resv.cid = c.cid
                     JOIN room_review review on
-                        review.cid = c.cid 
+                        review.cid = c.cid
                     JOIN hotel h on
                         r.hotel_id = h.hotel_id
-                    WHERE rr.check_in_date >= :start AND
-                        rr.check_out_date  <= :end
+                    WHERE
+                        rr.check_in_date >= :start
+                        AND rr.check_in_date <= :end
                     GROUP BY
-                        h.hotel_name
+                    h.hotel_name
                     '''
 
             elif form.cleaned_data['report_type'] == '2':
                 context['title'] = 'five best customers'
-                sql_stmt = 'select "foobar"'
+                sql_stmt = '''
+                        -- For a given time period (begin date and end date) compute the 5 best customers (in terms of money spent in reservations).
+                        select "foobar"
+
+                        '''
 
             elif form.cleaned_data['report_type'] == '3':
                 context['title'] = 'highest rated breakfast'
                 sql_stmt = '''
-                    SELECT max(rating), bb.b_type 
-                    FROM breakfast_review br
-                    JOIN breakfast bb on br.bid = bb.bid 
+                    --- For a given time period (begin date and end date) compute the highest rated breakfast type across all hotels.
+                    SELECT
+                        max(rating),
+                        b.b_type,
+                        h.hotel_id,
+                        h.hotel_name
+                    FROM
+                        room_reservation rr -- filter on dates
+                    JOIN reservation resv on
+                        rr.invoice_number = resv.invoice_number
+                    JOIN rresv_breakfast rb on 
+                        resv.invoice_number = rb.rr_id 
+                    JOIN breakfast_review br on 
+                        br.bid = rb.bid 
+                    JOIN breakfast b on 
+                        b.bid  == rb.bid 
+                    JOIN hotel h on
+                        rr.hotel_id = h.hotel_id
+                    WHERE
+                        rr.check_in_date >= :start
+                        AND rr.check_in_date <= :end
                     '''
 
-            elif  form.cleaned_data['report_type'] == '1':
+            elif  form.cleaned_data['report_type'] == '4':
                 context['title'] = 'highest rated service'
                 sql_stmt = '''
-                    SELECT max(rating), s.s_type 
-                    FROM service_review sr
-                    JOIN service s on sr.sid = s.sid 
+                    --- For a given time period (begin date and end date) compute the highest rated service type across all hotels.
+                    SELECT
+                        max(rating),
+                        s.s_type,
+                        h.hotel_id,
+                        h.hotel_name
+                    FROM
+                        room_reservation rr -- filter on dates
+                    JOIN reservation resv on
+                        rr.invoice_number = resv.invoice_number
+                    JOIN rresv_service resv on 
+                        resv.invoice_number = rr.rr_id
+                    JOIN service_review sr on 
+                        resv.sid = sr.sid 
+                    JOIN service s on 
+                        s.sid  == sr.sid 
+                    JOIN hotel h on
+                        rr.hotel_id = h.hotel_id
+                    WHERE
+                        rr.check_in_date >= :start
+                        AND rr.check_in_date <= :end
                     '''
             else:
                 sql_stmt = 'SELECT "foobar"'
@@ -337,7 +377,7 @@ def add_reviews(request: HttpRequest, type: str, id: int)-> HttpResponse:
             hotel_id=RoomReservation.objects.get(rr_id=id).hotel_id_id
             hotel = get_object_or_404(Hotel,pk=hotel_id)
             room_no = RoomReservation.objects.get(rr_id=id).room_no_id
-            room = get_object_or_404(Room,room_no= room_no)
+            #room = get_object_or_404(Room,room_no= room_no)
 
             room_res = get_object_or_404(RoomReservation, pk=id)
             
@@ -345,7 +385,6 @@ def add_reviews(request: HttpRequest, type: str, id: int)-> HttpResponse:
 
             if form.is_valid():
                 roomreview.hotel_id = hotel
-                roomreview.room_no = room
                 roomreview.rr_id = room_res
                 roomreview.rating = form.data['rating']
                 roomreview.text_content = form.data['text']

@@ -1,9 +1,8 @@
-INSERT INTO discounted_room
-(dr_id, discount, start_date, end_date, room_id)
-VALUES(1, 10.0, '2020-11-27', '2020-12-26', 1);
-INSERT INTO discounted_room
-(dr_id, discount, start_date, end_date, room_id)
-VALUES(2, 20.0, '2020-11-27', '2020-12-26', 2);
-INSERT INTO discounted_room
-(dr_id, discount, start_date, end_date, room_id)
-VALUES(3, 20.0, '2020-11-28', '2020-12-26', 1);
+INSERT INTO discounted_room (discount,start_date,end_date,room_id) VALUES
+	 (10.0,'2020-11-27','2020-12-26',1),
+	 (20.0,'2020-11-27','2020-12-26',2),
+	 (20.0,'2020-11-28','2020-12-26',1),
+	 (10.0,'2020-12-04','2020-12-26',5),
+	 (5.0,'2020-12-04','2020-12-31',6),
+	 (5.0,'2020-12-04','2020-12-26',8),
+	 (8.0,'2020-12-04','2020-12-31',7);

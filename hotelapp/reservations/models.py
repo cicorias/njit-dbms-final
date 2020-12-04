@@ -236,7 +236,7 @@ class RoomReview(models.Model):
   text_content = models.CharField(max_length=40, db_column='text')
 
   def __str__(self) -> str:
-    return f'{self.room_id} - rid: {self.rid}'
+    return f'{self.rr_id} - rid: {self.rid}'
 
   class Meta:
     db_table = 'room_review'
