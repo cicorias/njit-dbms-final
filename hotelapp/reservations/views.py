@@ -207,7 +207,7 @@ class ReservationView(View):
 
         form = ReservationForm(initial=initial)
 
-        # TODO: refactor these fields - duplicate in POST body.
+        # NOTE: refactor these fields - duplicate in POST body.
         svcs = form.get_services(hotel)
         form.fields['service'] = MultipleChoiceField(required=False, choices=svcs, widget=forms.CheckboxSelectMultiple())
 
@@ -231,7 +231,7 @@ class ReservationView(View):
         form = ReservationForm(request.POST)
         hotel = get_object_or_404(Hotel, hotel_id=kwargs['hotel_id'])
 
-        # TODO: refactor these fields
+        # NOTE: refactor these fields
         svcs = form.get_services(hotel)
         form.fields['service'] = MultipleChoiceField(required=False, choices=svcs, widget=forms.CheckboxSelectMultiple())
 
@@ -286,8 +286,7 @@ class ReservationView(View):
                     form.cleaned_data['check_out'],
                     form.cleaned_data['breakfast'],
                     form.cleaned_data['breakfast_number_orders'],
-                    s_list, # TODO - a list
-                    # form.cleaned_data['discount_id'] # TODO
+                    s_list,
 
                 )
                 
@@ -335,7 +334,7 @@ class ReservationView(View):
                         br = ReservationBreakfast()
                         br.bid = Breakfast.objects.get(pk=n_req.breakfast)
                         br.nooforders = n_req.breakfast_number_orders
-                        br.rr_id = resv
+                        br.rr_id = rr_resv # resv
 
                         br.save()
 
@@ -343,7 +342,7 @@ class ReservationView(View):
                     for s in n_req.svc_id:
                         resv_svc = ReservationService()
                         resv_svc.sid = s
-                        resv_svc.rr_id = resv
+                        resv_svc.rr_id = rr_resv #  resv
                         resv_svc.sprice = s.s_price
 
                         resv_svc.save()
@@ -378,19 +377,17 @@ def review_list(request: HttpRequest) -> HttpResponse:
         for j in i.roomreservation_set.all():
             room_res_rv[j.rr_id] = f'date: {i.r_date} - {j.hotel_id} - checkin: {j.check_in_date} through {j.check_out_date}'
 
-        for j in i.reservationservice_set.all():
-            room_svc_rv[j.rs_id] = f'date: {i.r_date} - {j.sid}'
+            for k in j.reservationservice_set.all():
+                room_svc_rv[k.rs_id] = f'date: {j.check_in_date} - {k.sid}'
 
-        for j in i.reservationbreakfast_set.all():
-            room_bkfst_rv[j.rb_id] = f'date: {i.r_date} - {j.bid}'
+            for k in j.reservationbreakfast_set.all():
+                room_bkfst_rv[k.rb_id] = f'date: {j.check_in_date} - {k.bid}'
             
 
     context['reservations'] = room_res_rv
     context['services'] = room_svc_rv
     context['breakfasts'] = room_bkfst_rv
 
-    # TODO: get breakfast collection
-    # TODO: get service collection
     return render(request, 'review_list.html', context)
 
 
@@ -398,8 +395,6 @@ def add_reviews(request: HttpRequest, type: str, id: int)-> HttpResponse:
     initial = {}
     context = {}
 
-    # TODO: make conditional on type of review selected.
-    
     if request.method == "POST":
         form = ReviewForm(request.POST)
         

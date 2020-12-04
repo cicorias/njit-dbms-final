@@ -179,7 +179,8 @@ class Service(models.Model):
 class ReservationBreakfast(models.Model):
   rb_id = models.AutoField(primary_key=True, db_column='rb_id')
   bid = models.ForeignKey(Breakfast, db_column='bid', on_delete=CASCADE)
-  rr_id = models.ForeignKey(Reservation, db_column='rr_id', on_delete=CASCADE)
+  # TODO: change to RoomReservation
+  rr_id = models.ForeignKey(RoomReservation, db_column='rr_id', on_delete=CASCADE)
 
   nooforders = models.PositiveIntegerField(db_column='nooforders')
 
@@ -195,9 +196,11 @@ class ReservationBreakfast(models.Model):
 class ReservationService(models.Model):
   rs_id = models.AutoField(primary_key=True, db_column='rs_id')
   sid = models.ForeignKey(Service, db_column='sid', on_delete=CASCADE)
-  rr_id = models.ForeignKey(Reservation, db_column='rr_id', on_delete=CASCADE)
+  # TODO: change to RoomReservation
+  rr_id = models.ForeignKey(RoomReservation, db_column='rr_id', on_delete=CASCADE)
 
-  # TODO: remove this as it is in the service definition
+  # NOTE: remove this as it is in the service definition
+  # NOTE: cleanup - this field is not referenced anymore
   sprice = models.FloatField(db_column='sprice')
 
   def __str__(self) -> str:
@@ -305,6 +308,5 @@ BookingRequest = namedtuple('BookingReqeust',
           'check_out',
           'breakfast',
           'breakfast_number_orders',
-          'svc_id', # TODO
-          # 'discount_id', # TODO
+          'svc_id',
           ])
