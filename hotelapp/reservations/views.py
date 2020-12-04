@@ -338,13 +338,15 @@ def add_reviews(request: HttpRequest, type: str, id: int)-> HttpResponse:
             hotel = get_object_or_404(Hotel,pk=hotel_id)
             room_no = RoomReservation.objects.get(rr_id=id).room_no_id
             room = get_object_or_404(Room,room_no= room_no)
+
+            room_res = get_object_or_404(RoomReservation, pk=id)
             
-            roomreview, created = RoomReview.objects.get_or_create(cid=request.user, room_id=room)
+            roomreview, created = RoomReview.objects.get_or_create(cid=request.user, rr_id=room_res)
 
             if form.is_valid():
                 roomreview.hotel_id = hotel
                 roomreview.room_no = room
-                roomreview.room_id = room
+                roomreview.rr_id = room_res
                 roomreview.rating = form.data['rating']
                 roomreview.text_content = form.data['text']
                 roomreview.cid = request.user

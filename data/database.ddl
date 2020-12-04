@@ -42,6 +42,10 @@ CREATE TABLE "rresv_service" ("rs_id" integer NOT NULL PRIMARY KEY AUTOINCREMENT
 --
 CREATE TABLE "room" ("room_id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "room_no" varchar(10) NOT NULL, "room_type" varchar(20) NOT NULL, "price" real NOT NULL, "description" varchar(40) NOT NULL, "floor" integer unsigned NOT NULL CHECK ("floor" >= 0), "capacity" integer unsigned NOT NULL CHECK ("capacity" >= 0), "hotel_id" integer NOT NULL REFERENCES "hotel" ("hotel_id") DEFERRABLE INITIALLY DEFERRED);
 --
+-- Create model RoomReservation
+--
+CREATE TABLE "room_reservation" ("rr_id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "check_in_date" date NOT NULL, "check_out_date" date NOT NULL, "hotel_id" integer NOT NULL REFERENCES "hotel" ("hotel_id") DEFERRABLE INITIALLY DEFERRED, "invoice_number" integer NOT NULL REFERENCES "reservation" ("invoice_number") DEFERRABLE INITIALLY DEFERRED, "room_no" integer NOT NULL REFERENCES "room" ("room_id") DEFERRABLE INITIALLY DEFERRED);
+--
 -- Create model ServiceReview
 --
 CREATE TABLE "service_review" ("rid" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "review_date" date NOT NULL, "rating" integer unsigned NOT NULL CHECK ("rating" >= 0), "text" varchar(40) NOT NULL, "cid" integer NOT NULL REFERENCES "customer" ("cid") DEFERRABLE INITIALLY DEFERRED, "sid" integer NOT NULL REFERENCES "rresv_service" ("rs_id") DEFERRABLE INITIALLY DEFERRED);
@@ -52,11 +56,7 @@ CREATE TABLE "service" ("sid" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "s_typ
 --
 -- Create model RoomReview
 --
-CREATE TABLE "room_review" ("rid" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "review_date" date NULL, "rating" integer unsigned NOT NULL CHECK ("rating" >= 0), "text" varchar(40) NOT NULL, "cid" integer NOT NULL REFERENCES "customer" ("cid") DEFERRABLE INITIALLY DEFERRED, "room_id" integer NOT NULL REFERENCES "room" ("room_id") DEFERRABLE INITIALLY DEFERRED);
---
--- Create model RoomReservation
---
-CREATE TABLE "room_reservation" ("rr_id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "check_in_date" date NOT NULL, "check_out_date" date NOT NULL, "hotel_id" integer NOT NULL REFERENCES "hotel" ("hotel_id") DEFERRABLE INITIALLY DEFERRED, "invoice_number" integer NOT NULL REFERENCES "reservation" ("invoice_number") DEFERRABLE INITIALLY DEFERRED, "room_no" integer NOT NULL REFERENCES "room" ("room_id") DEFERRABLE INITIALLY DEFERRED);
+CREATE TABLE "room_review" ("rid" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "review_date" date NULL, "rating" integer unsigned NOT NULL CHECK ("rating" >= 0), "text" varchar(40) NOT NULL, "cid" integer NOT NULL REFERENCES "customer" ("cid") DEFERRABLE INITIALLY DEFERRED, "rr_id" integer NOT NULL REFERENCES "room_reservation" ("rr_id") DEFERRABLE INITIALLY DEFERRED);
 --
 -- Add field sid to reservationservice
 --
@@ -67,14 +67,14 @@ ALTER TABLE "new__rresv_service" RENAME TO "rresv_service";
 CREATE INDEX "reservation_cc_number_d939d41c" ON "reservation" ("cc_number");
 CREATE INDEX "reservation_cid_582e16c2" ON "reservation" ("cid");
 CREATE INDEX "room_hotel_id_9bc4d861" ON "room" ("hotel_id");
+CREATE INDEX "room_reservation_hotel_id_1e997af2" ON "room_reservation" ("hotel_id");
+CREATE INDEX "room_reservation_invoice_number_9ed5b516" ON "room_reservation" ("invoice_number");
+CREATE INDEX "room_reservation_room_no_c5f42443" ON "room_reservation" ("room_no");
 CREATE INDEX "service_review_cid_12575593" ON "service_review" ("cid");
 CREATE INDEX "service_review_sid_fe847c50" ON "service_review" ("sid");
 CREATE INDEX "service_hotel_id_5a184fee" ON "service" ("hotel_id");
 CREATE INDEX "room_review_cid_657c5f74" ON "room_review" ("cid");
-CREATE INDEX "room_review_room_id_aca2e2fc" ON "room_review" ("room_id");
-CREATE INDEX "room_reservation_hotel_id_1e997af2" ON "room_reservation" ("hotel_id");
-CREATE INDEX "room_reservation_invoice_number_9ed5b516" ON "room_reservation" ("invoice_number");
-CREATE INDEX "room_reservation_room_no_c5f42443" ON "room_reservation" ("room_no");
+CREATE INDEX "room_review_rr_id_8da8a0ca" ON "room_review" ("rr_id");
 CREATE INDEX "rresv_service_rr_id_84b453f1" ON "rresv_service" ("rr_id");
 CREATE INDEX "rresv_service_sid_6035fdd5" ON "rresv_service" ("sid");
 --
@@ -140,12 +140,12 @@ CREATE INDEX "service_hotel_id_5a184fee" ON "service" ("hotel_id");
 --
 -- Create constraint unique roomreview on model roomreview
 --
-CREATE TABLE "new__room_review" ("rid" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "review_date" date NULL, "rating" integer unsigned NOT NULL CHECK ("rating" >= 0), "text" varchar(40) NOT NULL, "cid" integer NOT NULL REFERENCES "customer" ("cid") DEFERRABLE INITIALLY DEFERRED, "room_id" integer NOT NULL REFERENCES "room" ("room_id") DEFERRABLE INITIALLY DEFERRED, CONSTRAINT "unique roomreview" UNIQUE ("cid", "room_id"));
-INSERT INTO "new__room_review" ("rid", "review_date", "rating", "text", "cid", "room_id") SELECT "rid", "review_date", "rating", "text", "cid", "room_id" FROM "room_review";
+CREATE TABLE "new__room_review" ("rid" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "review_date" date NULL, "rating" integer unsigned NOT NULL CHECK ("rating" >= 0), "text" varchar(40) NOT NULL, "cid" integer NOT NULL REFERENCES "customer" ("cid") DEFERRABLE INITIALLY DEFERRED, "rr_id" integer NOT NULL REFERENCES "room_reservation" ("rr_id") DEFERRABLE INITIALLY DEFERRED, CONSTRAINT "unique roomreview" UNIQUE ("cid", "rr_id"));
+INSERT INTO "new__room_review" ("rid", "review_date", "rating", "text", "cid", "rr_id") SELECT "rid", "review_date", "rating", "text", "cid", "rr_id" FROM "room_review";
 DROP TABLE "room_review";
 ALTER TABLE "new__room_review" RENAME TO "room_review";
 CREATE INDEX "room_review_cid_657c5f74" ON "room_review" ("cid");
-CREATE INDEX "room_review_room_id_aca2e2fc" ON "room_review" ("room_id");
+CREATE INDEX "room_review_rr_id_8da8a0ca" ON "room_review" ("rr_id");
 --
 -- Create constraint unique roomreservation on model roomreservation
 --
