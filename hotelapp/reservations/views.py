@@ -55,7 +55,7 @@ def general_statistics(request: HttpRequest) -> HttpResponse:
 
         form = ReportForm(request.POST)
         if form.is_valid():
-            parms = {'start': form.cleaned_data['start_date'], 'end': form.cleaned_data['end_date'] }
+            parms = {'start_date': form.cleaned_data['start_date'], 'end_date': form.cleaned_data['end_date'] }
             if form.cleaned_data['report_type'] == '1':
                 context['title'] = 'highest rated room'
                 sql_stmt = '''
@@ -79,8 +79,10 @@ def general_statistics(request: HttpRequest) -> HttpResponse:
                     JOIN hotel h on
                         r.hotel_id = h.hotel_id
                     WHERE
-                        rr.check_in_date >= :start
-                        AND rr.check_in_date <= :end
+                        rr.check_in_date >= :start_date
+
+                        AND rr.check_in_date <= :end_date
+
                     GROUP BY
                     h.hotel_name
                     '''
@@ -89,7 +91,53 @@ def general_statistics(request: HttpRequest) -> HttpResponse:
                 context['title'] = 'five best customers'
                 sql_stmt = '''
                         -- For a given time period (begin date and end date) compute the 5 best customers (in terms of money spent in reservations).
-                        select "foobar"
+                        SELECT
+                            c.cid,
+                            c.email,
+                            c.friendly_name,
+                            r.price*
+                            (case when d.discount is null then 1
+                            else d.discount
+                        end)+ b.b_price + s.s_price as Total_Amount,
+                            rv.invoice_number
+                        FROM
+                            room_reservation rr
+                        JOIN rresv_breakfast rb on
+                            rr.invoice_number = rb.rr_id
+                        JOIN rresv_service rs on
+                            rr.invoice_number = rs.rr_id
+                        JOIN room r on
+                            rr.hotel_id = r.hotel_id
+                            and rr.room_no = r.room_no
+                        JOIN discounted_room d on
+                            r.room_id = d.room_id
+                            and d.room_id in (
+                            SELECT
+                                r.room_id
+                            FROM
+                                discounted_room d
+                            LEFT OUTER JOIN room r on
+                                d.room_id = r.room_id
+                            WHERE
+                                d.start_date >= :start_date
+
+                                AND d.end_date <= :end_date )
+                        JOIN breakfast b on
+                            rb.bid = b.bid
+                        JOIN service s on
+                            rs.sid = s.sid
+                        JOIN reservation rv on
+                            rv.invoice_number = rr.invoice_number
+                        JOIN customer c on
+                            c.cid = rv.cid
+                        WHERE
+                            rr.check_in_date >= :start_date
+                            AND rr.check_out_date <= :end_date
+                        GROUP BY
+                            c.cid
+                        ORDER BY
+                        Total_Amount desc
+                        LIMIT 5
 
                         '''
 
@@ -115,8 +163,10 @@ def general_statistics(request: HttpRequest) -> HttpResponse:
                     JOIN hotel h on
                         rr.hotel_id = h.hotel_id
                     WHERE
-                        rr.check_in_date >= :start
-                        AND rr.check_in_date <= :end
+                        rr.check_in_date >= :start_date
+
+                        AND rr.check_in_date <= :end_date
+
                     '''
 
             elif  form.cleaned_data['report_type'] == '4':
@@ -141,8 +191,10 @@ def general_statistics(request: HttpRequest) -> HttpResponse:
                     JOIN hotel h on
                         rr.hotel_id = h.hotel_id
                     WHERE
-                        rr.check_in_date >= :start
-                        AND rr.check_in_date <= :end
+                        rr.check_in_date >= :start_date
+
+                        AND rr.check_in_date <= :end_date
+
                     '''
             else:
                 sql_stmt = 'SELECT "foobar"'

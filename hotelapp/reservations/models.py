@@ -113,7 +113,7 @@ class RoomReservation(models.Model):
   check_out_date = models.DateField(db_column='check_out_date')
 
   def __str__(self) -> str:
-    return f'{self.hotel_id}:{self.room_no} rr_id: {self.rr_id}'
+    return f'{self.hotel_id}:{self.room_no} rr_id: {self.rr_id} -- {self.invoice_number}'
 
   class Meta:
     db_table = 'room_reservation'
