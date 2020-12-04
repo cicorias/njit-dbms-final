@@ -9,13 +9,13 @@ from django.http import HttpResponse, HttpRequest
 from django.views.generic import View, TemplateView
 from django import forms
 from django.db import connection, transaction
-from datetime import timedelta
+from datetime import date, timedelta
 import datetime
 import uuid
 from reservations.fields import EmptyChoiceField, EmptyMultipleChoiceField
 
 from users.models import CustomUser
-from .forms import HotelSelectionForm, ReservationForm, ReviewForm
+from .forms import HotelSelectionForm, ReportForm, ReservationForm, ReviewForm
 
 from .models import Breakfast, BreakfastReview, CreditCard, Hotel, Reservation, ReservationBreakfast, ReservationService, Room, RoomReservation, RoomReview, Service, BookingRequest, ServiceReview
 
@@ -48,58 +48,84 @@ def bookings(request: HttpRequest) -> HttpResponse:
     context['reservations'] = rv #  [(k, v) for k, v in rv.items()]
     return render(request, 'bookings.html', context)
 
-def general_statistics(request: HttpRequest) -> HttpResponse:
-    from  django.db import connection
+def general_statistics(request: HttpRequest, start:date = date.today(), end:date = date.today()) -> HttpResponse:
     context = {}
+    if request.method == 'POST':
+        from  django.db import connection
 
-    if 'highestratedroom' in request.path:
-        context['title'] = 'highest rated room'
-        sql_stmt = '''
-            SELECT max(rating), r.room_id, r.hotel_id, h.hotel_name 
-            FROM room_review rr
-            JOIN room r on rr.room_id = r.room_id
-            JOIN hotel h on r.hotel_id = r.hotel_id
-            GROUP BY h.hotel_name 
-            '''
+        form = ReportForm(request.POST)
+        parms = {'start': '2020-11-01', 'end': '2021-02-01'}
 
-    elif 'fivebestcustomers' in request.path:
-        context['title'] = 'five best customers'
-        sql_stmt = 'select "foobar"'
+        if form.is_valid():
+            if form.cleaned_data['report_type'] == '1':
+                context['title'] = 'highest rated room'
+                sql_stmt = '''
+                    -- For a given time period (begin date and end date) compute the highest rated room type for each hotel.
 
-    elif 'highestratedbreakfast' in request.path:
-        context['title'] = 'highest rated breakfast'
-        sql_stmt = '''
-            SELECT max(rating), bb.b_type 
-            FROM breakfast_review br
-            JOIN breakfast bb on br.bid = bb.bid 
-            '''
+                    SELECT
+                        max(rating),
+                        r.room_id,
+                        r.hotel_id,
+                        h.hotel_name
+                    FROM
+                        room_reservation rr -- filter on these dates
+                    JOIN room r on
+                        rr.room_no = r.room_id
+                    JOIN reservation resv on
+                        rr.invoice_number = resv.invoice_number
+                    JOIN customer c on 
+                        resv.cid = c.cid
+                    JOIN room_review review on
+                        review.cid = c.cid 
+                    JOIN hotel h on
+                        r.hotel_id = h.hotel_id
+                    WHERE rr.check_in_date >= :start AND
+                        rr.check_out_date  <= :end
+                    GROUP BY
+                        h.hotel_name
+                    '''
 
-    elif 'highestratedservice' in request.path:
-        context['title'] = 'highest rated service'
-        sql_stmt = '''
-            SELECT max(rating), s.s_type 
-            FROM service_review sr
-            JOIN service s on sr.sid = s.sid 
-            '''
+            elif form.cleaned_data['report_type'] == '2':
+                context['title'] = 'five best customers'
+                sql_stmt = 'select "foobar"'
 
+            elif form.cleaned_data['report_type'] == '3':
+                context['title'] = 'highest rated breakfast'
+                sql_stmt = '''
+                    SELECT max(rating), bb.b_type 
+                    FROM breakfast_review br
+                    JOIN breakfast bb on br.bid = bb.bid 
+                    '''
+
+            elif  form.cleaned_data['report_type'] == '1':
+                context['title'] = 'highest rated service'
+                sql_stmt = '''
+                    SELECT max(rating), s.s_type 
+                    FROM service_review sr
+                    JOIN service s on sr.sid = s.sid 
+                    '''
+            else:
+                sql_stmt = 'SELECT "foobar"'
+
+            def dictfetchall(cursor):
+                "Return all rows from a cursor as a dict"
+                columns = [col[0] for col in cursor.description]
+                return [
+                    dict(zip(columns, row))
+                    for row in cursor.fetchall()
+                ]
+
+            with connection.cursor() as cursor:
+                cursor.execute(sql_stmt, parms)
+                results = dictfetchall(cursor)
+            
+            context['results'] = results
+            context['form'] = form
+            return render(request, 'statistics.html', context)
     else:
-        sql_stmt = 'SELECT "foobar"'
-
-    def dictfetchall(cursor):
-        "Return all rows from a cursor as a dict"
-        columns = [col[0] for col in cursor.description]
-        return [
-            dict(zip(columns, row))
-            for row in cursor.fetchall()
-        ]
-
-    with connection.cursor() as cursor:
-        cursor.execute(sql_stmt)
-
-        results = dictfetchall(cursor)
-    
-    context['results'] = results
-    return render(request, 'statistics.html', context)
+        form = ReportForm()
+        context['form'] = form
+        return render(request, 'statistics.html', context)
 
 
 class ReservationView(View):

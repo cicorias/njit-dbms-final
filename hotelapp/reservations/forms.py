@@ -138,8 +138,6 @@ class ReviewForm(forms.Form):
 
         return rv
 
-    # TODO: add for services
-    # TODO: add for breakfast
     @staticmethod
     def get_room_services(user: CustomUser) -> Dict:
         rv = {}
@@ -161,3 +159,20 @@ class ReviewForm(forms.Form):
 
         return rv
 
+class ReportForm(forms.Form):
+    REPORT_CHOICES = (
+        ('1', 'highestratedroom'),
+        ('2', 'fivebestcustomers'),
+        ('3', 'highestratedbreakfast'),
+        ('4', 'highestratedservice'),
+    )
+    report_type = fields.ChoiceField(choices=REPORT_CHOICES, required=True)
+    start_date = fields.DateField(initial=datetime.date.today)
+    end_date = fields.DateField(initial=datetime.date.today)
+
+    def __init__(self, *args, **kwargs):
+        super(ReportForm, self).__init__(*args, **kwargs)
+        for field in iter(self.fields):
+            self.fields[field].widget.attrs.update({
+                'class': 'form-control'
+        })

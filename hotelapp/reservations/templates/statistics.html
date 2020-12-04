@@ -5,13 +5,16 @@
 {{messages}}
 {% endif %}
 
+<form method="POST">
+  <table>
+      {{ form  }}
+  </table>
+  {% csrf_token %}
+<button type="submit">Submit</button>
+
 <p>Statistics:</p>
-
 <h3>{{ title }}</h3>
-
 {% for r in results %}
   <p>r: {{r}}</p>
-
 {% endfor %}
-
 {% endblock %}
