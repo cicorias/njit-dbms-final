@@ -143,7 +143,8 @@ class ReviewForm(forms.Form):
         rv = {}
         resvs = user.reservation_set.all()
         
-        for rr in resvs:
+        for r in resvs:
+            for rr in r.roomreservation_set.all():
                 for rs in rr.reservationservice_set.all():
                     rv[rs.rs_id] = [rs.rr_id, rs.sid]
 
@@ -153,9 +154,10 @@ class ReviewForm(forms.Form):
     def get_room_breakfast(user: CustomUser) -> Dict:
         rv = {}
         resvs = user.reservation_set.all()
-        for rr in resvs:
-            for rb in rr.reservationbreakfast_set.all():
-                rv[rb.rb_id] = [rb.rr_id, rb.bid]
+        for r in resvs:
+            for rr in r.roomreservation_set.all():
+                for rb in rr.reservationbreakfast_set.all():
+                    rv[rb.rb_id] = [rb.rr_id, rb.bid]
 
         return rv
 

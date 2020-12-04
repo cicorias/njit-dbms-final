@@ -36,7 +36,7 @@ CREATE TABLE "reservation" ("invoice_number" integer NOT NULL PRIMARY KEY AUTOIN
 --
 -- Create model ReservationService
 --
-CREATE TABLE "rresv_service" ("rs_id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "sprice" real NOT NULL, "rr_id" integer NOT NULL REFERENCES "reservation" ("invoice_number") DEFERRABLE INITIALLY DEFERRED);
+CREATE TABLE "rresv_service" ("rs_id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "sprice" real NOT NULL);
 --
 -- Create model Room
 --
@@ -58,10 +58,10 @@ CREATE TABLE "service" ("sid" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "s_typ
 --
 CREATE TABLE "room_review" ("rid" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "review_date" date NULL, "rating" integer unsigned NOT NULL CHECK ("rating" >= 0), "text" varchar(40) NOT NULL, "cid" integer NOT NULL REFERENCES "customer" ("cid") DEFERRABLE INITIALLY DEFERRED, "rr_id" integer NOT NULL REFERENCES "room_reservation" ("rr_id") DEFERRABLE INITIALLY DEFERRED);
 --
--- Add field sid to reservationservice
+-- Add field rr_id to reservationservice
 --
-CREATE TABLE "new__rresv_service" ("rs_id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "sprice" real NOT NULL, "rr_id" integer NOT NULL REFERENCES "reservation" ("invoice_number") DEFERRABLE INITIALLY DEFERRED, "sid" integer NOT NULL REFERENCES "service" ("sid") DEFERRABLE INITIALLY DEFERRED);
-INSERT INTO "new__rresv_service" ("rs_id", "sprice", "rr_id", "sid") SELECT "rs_id", "sprice", "rr_id", NULL FROM "rresv_service";
+CREATE TABLE "new__rresv_service" ("rs_id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "sprice" real NOT NULL, "rr_id" integer NOT NULL REFERENCES "room_reservation" ("rr_id") DEFERRABLE INITIALLY DEFERRED);
+INSERT INTO "new__rresv_service" ("rs_id", "sprice", "rr_id") SELECT "rs_id", "sprice", NULL FROM "rresv_service";
 DROP TABLE "rresv_service";
 ALTER TABLE "new__rresv_service" RENAME TO "rresv_service";
 CREATE INDEX "reservation_cc_number_d939d41c" ON "reservation" ("cc_number");
@@ -76,11 +76,19 @@ CREATE INDEX "service_hotel_id_5a184fee" ON "service" ("hotel_id");
 CREATE INDEX "room_review_cid_657c5f74" ON "room_review" ("cid");
 CREATE INDEX "room_review_rr_id_8da8a0ca" ON "room_review" ("rr_id");
 CREATE INDEX "rresv_service_rr_id_84b453f1" ON "rresv_service" ("rr_id");
+--
+-- Add field sid to reservationservice
+--
+CREATE TABLE "new__rresv_service" ("rs_id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "sprice" real NOT NULL, "rr_id" integer NOT NULL REFERENCES "room_reservation" ("rr_id") DEFERRABLE INITIALLY DEFERRED, "sid" integer NOT NULL REFERENCES "service" ("sid") DEFERRABLE INITIALLY DEFERRED);
+INSERT INTO "new__rresv_service" ("rs_id", "sprice", "rr_id", "sid") SELECT "rs_id", "sprice", "rr_id", NULL FROM "rresv_service";
+DROP TABLE "rresv_service";
+ALTER TABLE "new__rresv_service" RENAME TO "rresv_service";
+CREATE INDEX "rresv_service_rr_id_84b453f1" ON "rresv_service" ("rr_id");
 CREATE INDEX "rresv_service_sid_6035fdd5" ON "rresv_service" ("sid");
 --
 -- Create model ReservationBreakfast
 --
-CREATE TABLE "rresv_breakfast" ("rb_id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "nooforders" integer unsigned NOT NULL CHECK ("nooforders" >= 0), "bid" integer NOT NULL REFERENCES "breakfast" ("bid") DEFERRABLE INITIALLY DEFERRED, "rr_id" integer NOT NULL REFERENCES "reservation" ("invoice_number") DEFERRABLE INITIALLY DEFERRED);
+CREATE TABLE "rresv_breakfast" ("rb_id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "nooforders" integer unsigned NOT NULL CHECK ("nooforders" >= 0), "bid" integer NOT NULL REFERENCES "breakfast" ("bid") DEFERRABLE INITIALLY DEFERRED, "rr_id" integer NOT NULL REFERENCES "room_reservation" ("rr_id") DEFERRABLE INITIALLY DEFERRED);
 --
 -- Create model DiscountedRoom
 --
@@ -167,7 +175,7 @@ CREATE INDEX "room_hotel_id_9bc4d861" ON "room" ("hotel_id");
 --
 -- Create constraint unique roomresservice on model reservationservice
 --
-CREATE TABLE "new__rresv_service" ("rs_id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "sprice" real NOT NULL, "rr_id" integer NOT NULL REFERENCES "reservation" ("invoice_number") DEFERRABLE INITIALLY DEFERRED, "sid" integer NOT NULL REFERENCES "service" ("sid") DEFERRABLE INITIALLY DEFERRED, CONSTRAINT "unique roomresservice" UNIQUE ("sid", "rr_id"));
+CREATE TABLE "new__rresv_service" ("rs_id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "sprice" real NOT NULL, "rr_id" integer NOT NULL REFERENCES "room_reservation" ("rr_id") DEFERRABLE INITIALLY DEFERRED, "sid" integer NOT NULL REFERENCES "service" ("sid") DEFERRABLE INITIALLY DEFERRED, CONSTRAINT "unique roomresservice" UNIQUE ("sid", "rr_id"));
 INSERT INTO "new__rresv_service" ("rs_id", "sprice", "rr_id", "sid") SELECT "rs_id", "sprice", "rr_id", "sid" FROM "rresv_service";
 DROP TABLE "rresv_service";
 ALTER TABLE "new__rresv_service" RENAME TO "rresv_service";
@@ -176,7 +184,7 @@ CREATE INDEX "rresv_service_sid_6035fdd5" ON "rresv_service" ("sid");
 --
 -- Create constraint unique roomresbreakfast on model reservationbreakfast
 --
-CREATE TABLE "new__rresv_breakfast" ("rb_id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "nooforders" integer unsigned NOT NULL CHECK ("nooforders" >= 0), "bid" integer NOT NULL REFERENCES "breakfast" ("bid") DEFERRABLE INITIALLY DEFERRED, "rr_id" integer NOT NULL REFERENCES "reservation" ("invoice_number") DEFERRABLE INITIALLY DEFERRED, CONSTRAINT "unique roomresbreakfast" UNIQUE ("bid", "rr_id"));
+CREATE TABLE "new__rresv_breakfast" ("rb_id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "nooforders" integer unsigned NOT NULL CHECK ("nooforders" >= 0), "bid" integer NOT NULL REFERENCES "breakfast" ("bid") DEFERRABLE INITIALLY DEFERRED, "rr_id" integer NOT NULL REFERENCES "room_reservation" ("rr_id") DEFERRABLE INITIALLY DEFERRED, CONSTRAINT "unique roomresbreakfast" UNIQUE ("bid", "rr_id"));
 INSERT INTO "new__rresv_breakfast" ("rb_id", "nooforders", "bid", "rr_id") SELECT "rb_id", "nooforders", "bid", "rr_id" FROM "rresv_breakfast";
 DROP TABLE "rresv_breakfast";
 ALTER TABLE "new__rresv_breakfast" RENAME TO "rresv_breakfast";
